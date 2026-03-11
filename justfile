@@ -1,37 +1,65 @@
-# 设置变量
-BUILD_DIR := "build"
+# 变量定义
+build_dir := "build"
+bin_dir   := "build/bin"
 
-# 默认行为：列出帮助信息
+# 默认指令：显示所有可用指令
 default:
     @just --list
 
-# 1. 编译整个项目
-build:
-    cmake -B {{BUILD_DIR}}
-    cmake --build {{BUILD_DIR}}
+# ------------------------------------------------------------------------------
+# 基础构建指令
+# ------------------------------------------------------------------------------
 
-# 2. 交互式选择并运行 (核心功能)
-# 此命令会列出 build/bin 下所有的可执行文件供你选择
-run:
-    @target=$(ls {{BUILD_DIR}}/bin/* 2>/dev/null | xargs -n 1 basename | fzf --prompt="请选择要运行的算法程序 > ") ; \
-    if [ -n "$target" ]; then \
-        echo "正在运行: $target" ; \
-        {{BUILD_DIR}}/bin/$target ; \
-    else \
-        echo "未选择任何目标。" ; \
-    fi
-
-# 3. 快速重编译并运行单个目标 (如果知道名字)
-# 用法: just run-single mainSLinkList
-run-single target:
-    cmake --build {{BUILD_DIR}} --target {{target}}
-    {{BUILD_DIR}}/bin/{{target}}
-
-# 4. 清理构建目录
-clean:
-    rm -rf {{BUILD_DIR}}
-
-# 5. 生成编译数据库 (用于 LSP 代码跳转)
+# 配置 CMake (生成 build 目录)
 setup:
-    cmake -B {{BUILD_DIR}} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-    ln -sf {{BUILD_DIR}}/compile_commands.json compile_commands.json
+    cmake -B {{build_dir}} -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+# 编译所有目标 (Examples 和 Tests)
+build: setup
+    cmake --build {{build_dir}} -j $(nproc)
+
+# 清理门户
+clean:
+    rm -rf {{build_dir}}
+    @echo "Build directory removed."
+
+# ------------------------------------------------------------------------------
+# 运行与调试 (类 Cargo 体验)
+# ------------------------------------------------------------------------------
+
+# 精准打击：编译并运行特定的 target (如: just p test_DLinkList)
+p target:
+    @cmake --build {{build_dir}} --target {{target}}
+    @echo "----------------------------------------"
+    @./{{bin_dir}}/{{target}}
+
+# 交互式起飞：列出所有可执行文件并选择运行 (需要安装 fzf)
+run:
+    @if [ ! -d "{{bin_dir}}" ]; then just build; fi
+    @target=$(ls {{bin_dir}} | fzf --prompt="🚀 Select Target > ") && \
+    cmake --build {{build_dir}} --target $target && \
+    ./{{bin_dir}}/$target
+
+# ------------------------------------------------------------------------------
+# 测试与性能
+# ------------------------------------------------------------------------------
+
+# 运行所有自动化测试 (CTest)
+test: build
+    cd {{build_dir}} && ctest --output-on-failure
+
+# 专门跑 Benchmark：只运行带有 [benchmark] 标签的测试用例
+# 用法: just bench <target_name> (如: just bench test_DLinkList)
+bench target:
+    @cmake --build {{build_dir}} --target {{target}}
+    @echo "📊 Running Benchmarks for {{target}}..."
+    @./{{bin_dir}}/{{target}} "[benchmark]" --benchmark-samples 100
+
+# ------------------------------------------------------------------------------
+# 辅助功能
+# ------------------------------------------------------------------------------
+
+# 快速检查代码统计
+stats:
+    @echo "HPP files: $(find include -name "*.hpp" | wc -l)"
+    @echo "CPP files: $(find examples tests -name "*.cpp" | wc -l)"

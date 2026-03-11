@@ -1,7 +1,6 @@
 #ifndef LEARNCPP_PKGS_LINKLIST_CLINKLIST_H
 #define LEARNCPP_PKGS_LINKLIST_CLINKLIST_H
 #include <cassert>
-#include <cstdbool>
 #include <cstddef>
 #include <cstdlib>
 
