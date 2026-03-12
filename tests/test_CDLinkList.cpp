@@ -18,7 +18,7 @@ TEST_CASE("CDLinkList: Circularity and Indexing", "[cdlink]") {
 
   SECTION("Modulo Indexing (GetElem)") {
     InsertPrior(L, 1, 10);
-    InsertPrior(L, 2, 20); // List: Head(0), 10(1), 20(2)
+    InsertPrior(L, 2, 20);  // List: Head(0), 10(1), 20(2)
 
     // 正常索引
     CHECK(GetElem(L, 1)->data == 10);
@@ -31,7 +31,7 @@ TEST_CASE("CDLinkList: Circularity and Indexing", "[cdlink]") {
   SECTION("DeletePrior in Circular List") {
     InsertPrior(L, 1, 10);
     InsertPrior(L, 2, 20);
-    InsertPrior(L, 3, 30); // [10, 20, 30]
+    InsertPrior(L, 3, 30);  // [10, 20, 30]
 
     int val;
     // 删除第3个节点(30)的前一个节点(20)
@@ -42,7 +42,7 @@ TEST_CASE("CDLinkList: Circularity and Indexing", "[cdlink]") {
   SECTION("GetLength and Length Tracking") {
     // 初始状态：只有头节点，长度为 1
     CHECK(GetLength(L) == 1);
-    CHECK(L->data == 1); // 头节点的 data 维护着链表长度
+    CHECK(L->data == 1);  // 头节点的 data 维护着链表长度
 
     InsertPrior(L, 1, 10);
     InsertPrior(L, 2, 20);
@@ -64,7 +64,7 @@ TEST_CASE("CDLinkList: Circularity and Indexing", "[cdlink]") {
     InsertPrior(L, 3, 30);
 
     // 正常查找存在的值
-    DLNode *target = LocateElem(L, 20);
+    DLNode* target = LocateElem(L, 20);
     REQUIRE(target != nullptr);
     CHECK(target->data == 20);
     // 验证查找到的节点确实在链表正确位置

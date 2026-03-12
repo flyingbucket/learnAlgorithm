@@ -7,9 +7,9 @@ TEST_CASE("SLinkList: Basic Operations", "[slink]") {
   REQUIRE(L != nullptr);
 
   SECTION("Insertion and Length") {
-    REQUIRE(ListInsert(L, 1, 10) == true); // [10]
-    REQUIRE(ListInsert(L, 2, 20) == true); // [10, 20]
-    REQUIRE(ListInsert(L, 2, 15) == true); // [10, 15, 20]
+    REQUIRE(ListInsert(L, 1, 10) == true);  // [10]
+    REQUIRE(ListInsert(L, 2, 20) == true);  // [10, 20]
+    REQUIRE(ListInsert(L, 2, 15) == true);  // [10, 15, 20]
     REQUIRE(LengthWithoutHeadNode(L) == 3);
   }
 
@@ -17,11 +17,11 @@ TEST_CASE("SLinkList: Basic Operations", "[slink]") {
     ListInsert(L, 1, 10);
     ListInsert(L, 2, 20);
 
-    LNode *target = LocateElem(L, 20);
+    LNode* target = LocateElem(L, 20);
     REQUIRE(target != nullptr);
     CHECK(target->data == 20);
 
-    LNode *byIndex = GetElem(L, 1);
+    LNode* byIndex = GetElem(L, 1);
     REQUIRE(byIndex != nullptr);
     CHECK(byIndex->data == 10);
   }
@@ -29,7 +29,7 @@ TEST_CASE("SLinkList: Basic Operations", "[slink]") {
   SECTION("Deletion") {
     ListInsert(L, 1, 10);
     ListInsert(L, 2, 20);
-    REQUIRE(ListDelete(L, 1) == true); // 删除 10
+    REQUIRE(ListDelete(L, 1) == true);  // 删除 10
     CHECK(LengthWithoutHeadNode(L) == 1);
     CHECK(GetElem(L, 1)->data == 20);
   }

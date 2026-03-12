@@ -8,7 +8,7 @@
 
 typedef struct LNode {
   ElemType data;
-  struct LNode *next;
+  struct LNode* next;
 } LNode, *LinkList;
 
 /**
@@ -17,7 +17,7 @@ typedef struct LNode {
  * * @return LinkList 分配成功的头节点指针，若失败则返回 NULL
  */
 inline LinkList DirectInitList(void) {
-  LinkList head = (LNode *)std::malloc(sizeof(LNode));
+  LinkList head = (LNode*)std::malloc(sizeof(LNode));
   if (head != NULL) {
     head->next = NULL;
   }
@@ -30,10 +30,9 @@ inline LinkList DirectInitList(void) {
  * @return true 初始化成功
  * @return false 内存分配失败
  */
-inline bool PointerInitList(LinkList *L) {
+inline bool PointerInitList(LinkList* L) {
   *L = (LinkList)std::malloc(sizeof(LNode));
-  if (*L == NULL)
-    return false;
+  if (*L == NULL) return false;
   return true;
 }
 
@@ -43,10 +42,9 @@ inline bool PointerInitList(LinkList *L) {
  * @return true 初始化成功
  * @return false 内存分配失败
  */
-inline bool InitList(LinkList &L) {
-  L = (LNode *)std::malloc(sizeof(LNode));
-  if (L == NULL)
-    return false;
+inline bool InitList(LinkList& L) {
+  L = (LNode*)std::malloc(sizeof(LNode));
+  if (L == NULL) return false;
   L->next = NULL;
   return true;
 }
@@ -56,7 +54,7 @@ inline bool InitList(LinkList &L) {
  * * @return int
  */
 inline int LengthWithHeadNode(LinkList L) {
-  LNode *p = L;
+  LNode* p = L;
   int len = 0;
   while (p != NULL) {
     len++;
@@ -71,7 +69,7 @@ inline int LengthWithHeadNode(LinkList L) {
  *    - 返回-1表示传入的头指针是NULL,即该链表不存在
  */
 inline int LengthWithoutHeadNode(LinkList L) {
-  LNode *p = L;
+  LNode* p = L;
   int len = 0;
   while (p != NULL) {
     len++;
@@ -86,8 +84,8 @@ inline int LengthWithoutHeadNode(LinkList L) {
  * * @return LNode*
  *    - 返回携带该值的链表节点的指针
  */
-inline LNode *GetElem(LinkList L, uint index) {
-  LNode *p = L;
+inline LNode* GetElem(LinkList L, uint index) {
+  LNode* p = L;
   uint j = 0;
   while (p != NULL && j < index) {
     p = p->next;
@@ -101,11 +99,10 @@ inline LNode *GetElem(LinkList L, uint index) {
  * @return LNode*
  *  - 返回携带该值的链表节点的指针
  */
-inline LNode *LocateElem(LinkList L, ElemType val) {
-  if (L == NULL)
-    return NULL;
-  LNode *p =
-      L->next; // headnote存储的数据语义和DataNode的语义完全不同，须手动跳过
+inline LNode* LocateElem(LinkList L, ElemType val) {
+  if (L == NULL) return NULL;
+  LNode* p =
+      L->next;  // headnote存储的数据语义和DataNode的语义完全不同，须手动跳过
   while (p != NULL && p->data != val) {
     p = p->next;
   }
@@ -122,21 +119,19 @@ inline LNode *LocateElem(LinkList L, ElemType val) {
  * @return bool
  * - 是否插入成功
  */
-inline bool ListInsert(LinkList &L, uint index, ElemType val) {
-  if (index == 0)
-    return false;
+inline bool ListInsert(LinkList& L, uint index, ElemType val) {
+  if (index == 0) return false;
 
-  LNode *p = L;
+  LNode* p = L;
   uint j = 0;
   while (p != NULL && j < index - 1) {
     j++;
     p = p->next;
   }
 
-  if (j < index - 1)
-    return false;
+  if (j < index - 1) return false;
 
-  LNode *new_node = (LNode *)std::malloc(sizeof(LNode));
+  LNode* new_node = (LNode*)std::malloc(sizeof(LNode));
   new_node->data = val;
   new_node->next = p->next;
   p->next = new_node;
@@ -151,11 +146,10 @@ inline bool ListInsert(LinkList &L, uint index, ElemType val) {
  * @return bool
  * - 是否删除成功
  */
-inline bool ListDelete(LinkList &L, uint index) {
-  if (index == 0)
-    return false;
+inline bool ListDelete(LinkList& L, uint index) {
+  if (index == 0) return false;
 
-  LNode *p = L;
+  LNode* p = L;
   uint j = 0;
   while (p != NULL && j < index - 1) {
     p = p->next;
@@ -166,7 +160,7 @@ inline bool ListDelete(LinkList &L, uint index) {
     return false;
   }
 
-  LNode *q = p->next;
+  LNode* q = p->next;
   p->next = q->next;
   free(q);
   return true;
@@ -177,7 +171,7 @@ inline void PrintList(LinkList L) {
     printf("List is NULL\n");
     return;
   }
-  LNode *p = L->next; // 跳过头节点
+  LNode* p = L->next;  // 跳过头节点
   printf("Head -> ");
   while (p != NULL) {
     printf("[%d] -> ", p->data);

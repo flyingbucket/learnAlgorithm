@@ -1,8 +1,10 @@
 #include "catch2/catch.hpp"
 #include "queue/SqQueue.hpp"
 
+#define MaxSize 50
+
 TEST_CASE("SqQueue: Initialization", "[SqQueue]") {
-  SqQueue *q;
+  SqQueue* q;
   // 根据签名，InitQueue 接收一个指针
   bool initSuccess = InitQueue(&q);
   REQUIRE(initSuccess == true);
@@ -14,7 +16,7 @@ TEST_CASE("SqQueue: Initialization", "[SqQueue]") {
 }
 
 TEST_CASE("SqQueue: EnQueue and DeQueue basics", "[SqQueue]") {
-  SqQueue *q;
+  SqQueue* q;
   InitQueue(&q);
 
   SECTION("EnQueue a single element") {
@@ -54,7 +56,7 @@ TEST_CASE("SqQueue: EnQueue and DeQueue basics", "[SqQueue]") {
 }
 
 TEST_CASE("SqQueue: Full queue behavior", "[SqQueue]") {
-  SqQueue *q;
+  SqQueue* q;
   InitQueue(&q);
 
   SECTION("Fill the queue to its capacity") {
@@ -76,7 +78,7 @@ TEST_CASE("SqQueue: Full queue behavior", "[SqQueue]") {
 }
 
 TEST_CASE("SqQueue: Circular Wrap-around behavior", "[SqQueue]") {
-  SqQueue *q;
+  SqQueue* q;
   InitQueue(&q);
 
   // 1. 先入队一部分数据 (例如 20 个)
@@ -111,4 +113,62 @@ TEST_CASE("SqQueue: Circular Wrap-around behavior", "[SqQueue]") {
 
   // 最终应该再次变为空
   REQUIRE(isSqQueueEmpty(q) == true);
+}
+
+TEST_CASE("SqQueue: Dynamic Capacity and Stress Test", "[SqQueue]") {
+  SqQueue* q = nullptr;
+
+  SECTION("Custom small capacity (Size 5)") {
+    // 初始化容量为 5，实际可用空间应为 4
+    REQUIRE(InitQueue(&q, 5) == true);
+
+    // 填满队列 (4个元素)
+    for (int i = 0; i < 4; ++i) {
+      REQUIRE(EnQueue(q, i * 10) == true);
+    }
+
+    // 验证已满
+    REQUIRE(isSqQueueFull(q) == true);
+    REQUIRE(SqQueueLength(q) == 4);
+    REQUIRE(EnQueue(q, 99) == false);  // 无法再入队
+
+    // 释放内存
+    REQUIRE(DestorySqQueue(&q) == true);
+  }
+
+  SECTION("Wrap-around with custom capacity") {
+    int cap = 10;
+    InitQueue(&q, cap);
+
+    // 1. 入队 8 个
+    for (int i = 0; i < 8; ++i) EnQueue(q, i);
+
+    // 2. 出队 5 个，front 移到中间
+    int val;
+    for (int i = 0; i < 5; ++i) DeQueue(q, &val);
+    REQUIRE(SqQueueLength(q) == 3);
+
+    // 3. 再入队，触发 rear 回绕 (Wrap-around)
+    // 此时剩余空间：(10-1) - 3 = 6
+    for (int i = 0; i < 6; ++i) {
+      REQUIRE(EnQueue(q, i + 100) == true);
+    }
+
+    REQUIRE(isSqQueueFull(q) == true);
+    REQUIRE(SqQueueLength(q) == 9);
+
+    DestorySqQueue(&q);
+  }
+
+  SECTION("Large capacity test") {
+    // 测试较大内存分配
+    int largeCap = 10000;
+    REQUIRE(InitQueue(&q, largeCap) == true);
+    REQUIRE(isSqQueueEmpty(q) == true);
+
+    EnQueue(q, 1234);
+    REQUIRE(SqQueueLength(q) == 1);
+
+    DestorySqQueue(&q);
+  }
 }

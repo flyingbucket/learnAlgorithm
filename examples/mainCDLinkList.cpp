@@ -1,14 +1,14 @@
-#include "linkedlist/CDLinkList.hpp"
 #include <cassert>
-#include <cstdio> // 替换了 iostream
+#include <cstdio>  // 替换了 iostream
+
+#include "linkedlist/CDLinkList.hpp"
 
 // 辅助函数：打印链表，方便肉眼调试
 void PrintList(CDLinkList L) {
-  if (L == NULL)
-    return;
+  if (L == NULL) return;
   printf("[Head(len=%d)] <-> ", L->data);
 
-  DLNode *p = L->next;
+  DLNode* p = L->next;
   while (p != L) {
     printf("%d <-> ", p->data);
     p = p->next;
@@ -22,8 +22,8 @@ void TestInitAndLength() {
 
   assert(InitCList(L) == true);
   assert(L != NULL);
-  assert(L->data == 1);      // 仅包含头节点
-  assert(GetLength(L) == 1); // 验证 GetLength 函数
+  assert(L->data == 1);       // 仅包含头节点
+  assert(GetLength(L) == 1);  // 验证 GetLength 函数
 
   printf("✅ 初始化与长度测试通过\n\n");
 }
@@ -46,7 +46,7 @@ void TestInsert() {
   // 现在的链表应该是: Head <-> 10 <-> 20 <-> 30
   PrintList(L);
 
-  DLNode *p = GetElem(L, 1);
+  DLNode* p = GetElem(L, 1);
   assert(p->data == 10);
   p = GetElem(L, 3);
   assert(p->data == 30);
@@ -65,20 +65,20 @@ void TestSearchAndNegativeIndex() {
   // 长度 L->data = 4
 
   // 1. 测试 LocateElem (按值查找)
-  DLNode *p1 = LocateElem(L, 200);
+  DLNode* p1 = LocateElem(L, 200);
   assert(p1 != NULL && p1->data == 200);
-  DLNode *p2 = LocateElem(L, 999);
-  assert(p2 == NULL); // 找不到
+  DLNode* p2 = LocateElem(L, 999);
+  assert(p2 == NULL);  // 找不到
 
   // 2. 测试 GetElem 的正向索引
   assert(GetElem(L, 1)->data == 100);
   assert(GetElem(L, 3)->data == 300);
 
   // 3. 测试 GetElem 的负数索引
-  assert(GetElem(L, -1)->data == 300); // -1 映射到最后一个元素
-  assert(GetElem(L, -3)->data == 100); // -3 映射到第一个元素
-  assert(GetElem(L, -4) == L);         // -4 映射到头节点
-  assert(GetElem(L, -5)->data == 300); // 测试极端的负数越界循环
+  assert(GetElem(L, -1)->data == 300);  // -1 映射到最后一个元素
+  assert(GetElem(L, -3)->data == 100);  // -3 映射到第一个元素
+  assert(GetElem(L, -4) == L);          // -4 映射到头节点
+  assert(GetElem(L, -5)->data == 300);  // 测试极端的负数越界循环
 
   printf("✅ 查找与负数索引测试通过\n\n");
 }
@@ -100,7 +100,7 @@ void TestDelete() {
   // 注意：要让下面这行 assert 通过，你需要将头文件中 DeletePrior 的参数改为
   // ElemType &val 并加上 val = p->data; assert(deleted_val == 20);
 
-  assert(L->data == 3); // 长度减1
+  assert(L->data == 3);  // 长度减1
 
   // 现在的链表应该是: Head <-> 10 <-> 30
   PrintList(L);

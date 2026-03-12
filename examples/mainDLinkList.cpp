@@ -1,21 +1,21 @@
-#include "linkedlist/DLinkList.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-
 #include <iostream>
 
+#include "linkedlist/DLinkList.hpp"
+
 // 一个简单的断言增强，方便定位问题
-#define TEST_ASSERT(cond, msg)                                                 \
-  if (!(cond)) {                                                               \
-    std::cerr << "FAILED: " << msg << std::endl;                               \
-    abort();                                                                   \
-  } else {                                                                     \
-    std::cout << "PASSED: " << msg << std::endl;                               \
+#define TEST_ASSERT(cond, msg)                   \
+  if (!(cond)) {                                 \
+    std::cerr << "FAILED: " << msg << std::endl; \
+    abort();                                     \
+  } else {                                       \
+    std::cout << "PASSED: " << msg << std::endl; \
   }
 // 辅助函数：打印链表内容
 void PrintList(DLinkList L) {
-  DLNode *p = L->next;
+  DLNode* p = L->next;
   printf("List (len=%d): [Head] <-> ", L->data);
   while (p != NULL) {
     printf("%d <-> ", p->data);
@@ -25,10 +25,10 @@ void PrintList(DLinkList L) {
 }
 
 // 辅助函数：清理内存
-void DestroyList(DLinkList &L) {
-  DLNode *p = L;
+void DestroyList(DLinkList& L) {
+  DLNode* p = L;
   while (p != NULL) {
-    DLNode *temp = p;
+    DLNode* temp = p;
     p = p->next;
     free(temp);
   }
@@ -43,9 +43,9 @@ int main() {
   TEST_ASSERT(L != nullptr && L->next == nullptr, "Initialization");
 
   // 2. 插入阶段 (测试不同位置)
-  InsertPrior(L, 1, 10); // [10]
-  InsertPrior(L, 2, 20); // [10, 20]
-  InsertPrior(L, 2, 15); // [10, 15, 20]
+  InsertPrior(L, 1, 10);  // [10]
+  InsertPrior(L, 2, 20);  // [10, 20]
+  InsertPrior(L, 2, 15);  // [10, 15, 20]
   TEST_ASSERT(LengthWithoutHeadNode(L) == 3,
               "Length after multiple insertions");
 
