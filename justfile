@@ -18,7 +18,13 @@ setup:
 build: setup
     cmake --build {{build_dir}} -j $(nproc)
 
-# 清理门户
+# 交互式选择：列出所有二进制入口，选择并编译 (需要安装 fzf)
+build-p:
+    @if [ ! -d "{{bin_dir}}" ]; then just build; fi
+    @target=$(ls {{bin_dir}} | fzf --prompt="Please select target > ") && \
+    cmake --build {{build_dir}} --target $target 
+
+# 删除build/
 clean:
     rm -rf {{build_dir}}
     @echo "Build directory removed."
@@ -27,16 +33,16 @@ clean:
 # 运行与调试 (类 Cargo 体验)
 # ------------------------------------------------------------------------------
 
-# 精准打击：编译并运行特定的 target (如: just p test_DLinkList)
+# 编译并运行特定的 target (如: just p test_DLinkList)
 p target:
     @cmake --build {{build_dir}} --target {{target}}
     @echo "----------------------------------------"
     @./{{bin_dir}}/{{target}}
 
-# 交互式起飞：列出所有可执行文件并选择运行 (需要安装 fzf)
+# 交互式选择：列出所有可执行文件并选择运行 (需要安装 fzf)
 run:
     @if [ ! -d "{{bin_dir}}" ]; then just build; fi
-    @target=$(ls {{bin_dir}} | fzf --prompt="🚀 Select Target > ") && \
+    @target=$(ls {{bin_dir}} | fzf --prompt="Please select target > ") && \
     cmake --build {{build_dir}} --target $target && \
     ./{{bin_dir}}/$target
 
@@ -48,16 +54,12 @@ run:
 test: build
     cd {{build_dir}} && ctest --output-on-failure
 
-# 专门跑 Benchmark：只运行带有 [benchmark] 标签的测试用例
-# 用法: just bench <target_name> (如: just bench test_DLinkList)
+# 运行 Benchmark：只运行带有 [benchmark] 标签的测试用例. 用法: just bench <target_name> (如: just bench test_DLinkList)
 bench target:
     @cmake --build {{build_dir}} --target {{target}}
-    @echo "📊 Running Benchmarks for {{target}}..."
+    @echo "Running Benchmarks for {{target}}..."
     @./{{bin_dir}}/{{target}} "[benchmark]" --benchmark-samples 100
 
-# ------------------------------------------------------------------------------
-# 辅助功能
-# ------------------------------------------------------------------------------
 
 # 快速检查代码统计
 stats:
