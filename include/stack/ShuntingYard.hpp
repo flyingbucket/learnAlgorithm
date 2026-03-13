@@ -1,52 +1,101 @@
 #ifndef INCLUDE_STACK_SHUNTINGYARD_HPP
 #define INCLUDE_STACK_SHUNTINGYARD_HPP
 #include <cstdlib>
-#include <locale>
+#include <cstring>
 #include <stack/SqStack.hpp>
 
-#include "stack/LiStack.hpp"
+#include "queue/SqQueue.hpp"
 
-inline bool isSymbol(char sym) {
-  char* symbols = [ '(', ')', '+', '-', '*', '/', '%', '\0' ];
-  bool result = false;
-  int i = 0;
-  while (symbols[i] != '\0') {
-    if (symbols[i] == sym) {
-      result = true;
-      break;
-    }
-    i++;
+inline int _sym_code(char sym) {
+  static int table[256] = {0};
+  static int initialized = 0;
+  if (!initialized) {
+    table[' '] = -1;
+
+    table['('] = 1;
+    table[')'] = 2;
+
+    table['+'] = 3;
+    table['-'] = 3;
+
+    table['*'] = 4;
+    table['/'] = 4;
+    table['%'] = 4;
   }
-  return result;
+  return table[(unsigned char)sym];
 }
 
 // 建议使用指针来处理字符数组
 // 返回值：一个动态分配的字符串，包含后缀表达式
 inline char* infix_to_postfix(const char* infix_expr) {
-  SqStack* s = NULL;
   int len = 0;
   int valid_len = 0;
-  int i = 0;
-  while (infix_expr[i] != '\0') {
+  for (int i = 0; infix_expr[i] != '\0'; i++) {
+    char sym = infix_expr[i];
+    int t_code = _sym_code(sym);
     len++;
-    if (infix_expr[i] != '(' || infix_expr[i] != ')') {
+    if (t_code == 0 || t_code == 1 || t_code == 2) {
       valid_len++;
     }
   }
-  char* result;
-  result = (char*)malloc(sizeof(char) * valid_len);
 
-  bool init_ok = InitStack(&s, len);
-  if (!init_ok) {
+  SqStack* sym_stack = NULL;
+  bool init_sym_ok = InitStack(&sym_stack, sizeof(char), len);
+  SqQueue* res_queue = NULL;
+  bool init_res_ok = InitQueue(&res_queue, sizeof(char), valid_len);
+  if (!(init_res_ok && init_sym_ok)) {
     exit(1);
   }
 
-  i = 0;
-  while (infix_expr[i] != '\0') {
-    if (!isSymbol(infix_expr[i])) {
-      Push(&s, infix_expr[i]);
+  for (int i = 0; infix_expr[i] != '\0'; i++) {
+    char sym = infix_expr[i];
+    int code = _sym_code(sym);
+    switch (code) {
+      case -1:
+        break;
+
+      case 0: {
+        EnQueue(res_queue, &sym);
+        break;
+      }
+
+      case 1: {
+        Push(sym_stack, &sym);
+        break;
+        ;
+      }
+
+      case 2: {
+        char tmp = sym;
+        while (Pop(sym_stack, &tmp) || _sym_code(tmp) > 1) {
+          EnQueue(res_queue, &tmp);
+        }
+        Pop(sym_stack, &tmp);
+        break;
+      }
+
+      case 3:
+      case 4: {
+        char top_sym;
+        while (GetTop(sym_stack, &top_sym) &&
+               _sym_code(top_sym) >= _sym_code(sym)) {
+          Pop(sym_stack, &top_sym);
+          EnQueue(res_queue, &top_sym);
+        }
+        break;
+      }
     }
   }
+  char* result = (char*)malloc(sizeof(char) * (valid_len + 1));
+  int i = 0;
+  while (!isSqQueueEmpty(res_queue)) {
+    DeQueue(res_queue, &result[i]);  // 直接写入
+    i++;
+  }
+  result[i] = '\0';  // 必须添加字符串结束符！
+  DestroyStack(&sym_stack);
+  DestorySqQueue(&res_queue);
+  return result;
 }
 
 // 建议使用二级指针或栈结构来存储子表达式
