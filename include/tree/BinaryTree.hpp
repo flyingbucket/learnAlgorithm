@@ -1,7 +1,11 @@
 #ifndef INCLUDE_TREE_BINARYTREE_HPP
 #define INCLUDE_TREE_BINARYTREE_HPP
-#include <cstdint>
+#include <cstddef>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+
+#include "queue/SqQueue.hpp"
 
 typedef struct {
   void* arr;
@@ -48,51 +52,143 @@ inline void PostOrder(void* tree, void* root_handle, TreeOps ops,
   visit(tree, root_handle);
 }
 
-inline int li_is_valid(void* tree, void* node) { return node != NULL; }
-inline void* li_get_left(void* ctx, void* node) { return ((Node*)node)->l; }
+inline void LevelOrder(void* tree, void* root_handle, TreeOps ops,
+                       VisitFunc visit) {
+  if (!ops.is_valid(tree, root_handle)) return;
 
-inline void* li_get_right(void* ctx, void* node) { return ((Node*)node)->r; }
-
-inline void li_visit_int(void* ctx, void* node) {
-  int val = *(int*)(((Node*)node)->data);
-  printf("%d ", val);
+  SqQueue* que = NULL;
+  InitQueue(&que, sizeof(void*));
+  EnQueue(que, &root_handle);
+  while (!isSqQueueEmpty(que)) {
+    void* head = NULL;
+    DeQueue(que, &head);
+    visit(tree, head);
+    void* left = ops.get_left(tree, head);
+    if (ops.is_valid(tree, left)) {
+      EnQueue(que, &left);
+    }
+    void* right = ops.get_right(tree, head);
+    if (ops.is_valid(tree, right)) {
+      EnQueue(que, &right);
+    }
+  }
+  DestorySqQueue(&que);
 }
 
-const TreeOps BiTreeLiOps = {
-    .is_valid = li_is_valid,
-    .get_left = li_get_left,
-    .get_right = li_get_right,
-};
+enum TreeError { TREE_OK = 0, TREE_ERR_MALLOC, TREE_ERR_INVALID_INPUT };
 
-inline int arr_is_valid(void* tree, void* node) {
-  BiTreeArr* arTree = (BiTreeArr*)tree;
-  intptr_t index = (intptr_t)node;
-  return index < arTree->size;
+inline void DestroyBiTreeLi(Node* node) {
+  if (node == NULL) return;
+  DestroyBiTreeLi(node->l);
+  DestroyBiTreeLi(node->r);
+  free(node->data);
+  free(node);
 }
 
-inline void* arr_get_left(void* tree, void* node) {
-  BiTreeArr* arTree = (BiTreeArr*)tree;
-  intptr_t index = (intptr_t)node;
-  return (void*)(index * 2 + 1);
+inline void* _get_rootptr(void* root, void* vec, size_t elem_size, uint len) {
+  char* base = (char*)vec;
+  for (uint i = 0; i < len; i++) {
+    char* curr = base + i * elem_size;
+    if (memcmp(root, (void*)curr, elem_size) == 0) {
+      return curr;
+    }
+  }
+  return NULL;
 }
 
-inline void* arr_get_right(void* tree, void* node) {
-  BiTreeArr* arTree = (BiTreeArr*)tree;
-  intptr_t index = (intptr_t)node;
-  return (void*)(index * 2 + 2);
+inline BiTreeLi _fromPreAndInOrderHelper(void* pre, void* in, size_t elem_size,
+                                         uint len, int* err) {
+  if (*err != TREE_OK) return NULL;
+  if (len == 0) return NULL;
+
+  Node* rootNode = (Node*)malloc(sizeof(Node));
+  if (rootNode == NULL) {
+    *err = TREE_ERR_MALLOC;
+    return NULL;
+  }
+  rootNode->data = malloc(elem_size);
+  if (rootNode->data == NULL) {
+    free(rootNode);
+    *err = TREE_ERR_MALLOC;
+    return NULL;
+  }
+  memcpy(rootNode->data, pre, elem_size);
+  rootNode->l = NULL;
+  rootNode->r = NULL;
+
+  void* root_in_in = _get_rootptr(pre, in, elem_size, len);
+  if (root_in_in == NULL) {
+    *err = TREE_ERR_INVALID_INPUT;
+    free(rootNode->data);
+    free(rootNode);
+    return NULL;
+  }
+
+  void* right_in_in = (void*)((char*)root_in_in + elem_size);
+
+  uint left_len = ((char*)root_in_in - (char*)in) / elem_size;
+  uint right_len = len - left_len - 1;
+
+  void* left_pre = (void*)((char*)pre + elem_size);
+  void* right_pre = (void*)((char*)pre + (left_len + 1) * elem_size);
+
+  BiTreeLi left_tree =
+      _fromPreAndInOrderHelper(left_pre, in, elem_size, left_len, err);
+  if (*err != TREE_OK) {
+    free(rootNode->data);
+    free(rootNode);
+    return NULL;
+  }
+  BiTreeLi right_tree = _fromPreAndInOrderHelper(right_pre, right_in_in,
+                                                 elem_size, right_len, err);
+  if (*err != TREE_OK) {
+    DestroyBiTreeLi(rootNode->l);
+    free(rootNode->data);
+    free(rootNode);
+    return NULL;
+  }
+
+  rootNode->l = left_tree;
+  rootNode->r = right_tree;
+  return rootNode;
 }
 
-inline void arr_visit_int(void* tree, void* node) {
-  BiTreeArr* arTree = (BiTreeArr*)tree;
-  intptr_t index = (intptr_t)node;
-  char* target = (char*)arTree->arr + index * arTree->elem_size;
-  printf("%d", *(int*)target);
+inline BiTreeLi fromPreAndInOrder(void* pre, void* in, size_t elem_size,
+                                  uint len) {
+  int err = TREE_OK;
+  BiTreeLi root = _fromPreAndInOrderHelper(pre, in, elem_size, len, &err);
+
+  if (err != TREE_OK) {
+    fprintf(stderr, "[ERROR] fromPreAndInOrder Failed! Error Code: %d\n", err);
+
+    switch (err) {
+      case TREE_ERR_MALLOC:
+        fprintf(
+            stderr,
+            " -> Reason: Memory allocation failed (malloc returned NULL).\n");
+        break;
+      case TREE_ERR_INVALID_INPUT:
+        fprintf(stderr,
+                " -> Reason: Invalid input data. Root node not found in "
+                "InOrder sequence.\n");
+        fprintf(stderr,
+                " -> Suggestion: Check if PreOrder and InOrder arrays match "
+                "the same tree.\n");
+        break;
+      default:
+        fprintf(stderr, " -> Reason: Unknown error.\n");
+        break;
+    }
+
+    if (root != NULL) {
+      fprintf(stderr,
+              " -> Cleanup: Destroying partial tree to prevent leak.\n");
+      DestroyBiTreeLi(root);
+    }
+
+    return NULL;
+  }
+
+  return root;
 }
-
-const TreeOps BiTreeArrOps = {
-    .is_valid = arr_is_valid,
-    .get_left = arr_get_left,
-    .get_right = arr_get_right,
-};
-
 #endif  // !INCLUDE_TREE_BINARYTREE_HPP

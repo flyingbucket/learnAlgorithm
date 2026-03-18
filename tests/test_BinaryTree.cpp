@@ -2,157 +2,203 @@
 
 #include "catch2/catch.hpp"
 #include "tree/BinaryTree.hpp"
+#include "tree/ImplBiTree.hpp"
 
-// ==========================================
-// 辅助工具：用于捕获遍历结果
-// ==========================================
+// =========================================================
+// 测试辅助工具
+// =========================================================
 
-// 全局变量用于存储遍历结果，每次测试前需要清空
-std::vector<int> g_result;
+// 全局容器，用于收集遍历结果
+std::vector<int> g_visit_result;
 
-// 1. 针对链表树的捕获访问者
-void capture_li_visit(void* tree, void* node_handle) {
-  Node* node = (Node*)node_handle;
-  if (node && node->data) {
-    g_result.push_back(*(int*)(node->data));
+// 1. 链式二叉树的 Visit 函数
+void CaptureLiVisit(void* tree, void* node) {
+  if (node) {
+    Node* n = (Node*)node;
+    // 假设数据是 int (注意：你的 fromPreAndInOrder 是 malloc(elem_size)
+    // 拷贝数据的)
+    int val = *(int*)n->data;
+    g_visit_result.push_back(val);
   }
 }
 
-// 2. 针对数组树的捕获访问者
-void capture_arr_visit(void* tree, void* node_handle) {
-  BiTreeArr* arrTree = (BiTreeArr*)tree;
-  intptr_t index = (intptr_t)node_handle;
+// 2. 数组二叉树的 Visit 函数
+void CaptureArrVisit(void* tree, void* node) {
+  BiTreeArr* arTree = (BiTreeArr*)tree;
+  intptr_t index = (intptr_t)node;
 
-  // 计算内存地址并读取 int
-  char* target = (char*)arrTree->arr + (index * arrTree->elem_size);
-  g_result.push_back(*(int*)target);
+  // 计算数组中的偏移地址
+  char* target = (char*)arTree->arr + index * arTree->elem_size;
+  int val = *(int*)target;
+  g_visit_result.push_back(val);
 }
 
-// ==========================================
-// 测试用例
-// ==========================================
+// =========================================================
+// 测试用例：链式二叉树 (BiTreeLi)
+// =========================================================
 
-TEST_CASE("Linked List Binary Tree (Node*)", "[list]") {
-  // 准备数据
-  // 结构:      1
-  //          /   \
-  //         2     3
-  //        /
-  //       4
+TEST_CASE("Linked Binary Tree Operations", "[BiTreeLi]") {
+  // 准备测试数据:
+  //        1
+  //       / \
+  //      2   3
+  //     / \   \
+  //    4   5   6
 
-  int d1 = 1, d2 = 2, d3 = 3, d4 = 4;
+  int pre[] = {1, 2, 4, 5, 3, 6};
+  int in[] = {4, 2, 5, 1, 3, 6};
+  size_t len = 6;
+  size_t elem_size = sizeof(int);
 
-  Node n4 = {&d4, NULL, NULL};
-  Node n2 = {&d2, &n4, NULL};  // 2 的左孩子是 4
-  Node n3 = {&d3, NULL, NULL};
-  Node root = {&d1, &n2, &n3};  // 1 的左是 2，右是 3
+  // 1. 测试重建与基本结构
+  SECTION("Reconstruct from PreOrder & InOrder") {
+    BiTreeLi root = fromPreAndInOrder(pre, in, elem_size, len);
 
-  // 每次测试前清空结果
-  g_result.clear();
+    REQUIRE(root != NULL);
+    REQUIRE(*(int*)root->data == 1);
 
-  SECTION("PreOrder Traversal") {
-    // 预期: 1 -> 2 -> 4 -> 3
-    PreOrder(NULL, &root, BiTreeLiOps, capture_li_visit);
+    REQUIRE(root->l != NULL);
+    REQUIRE(*(int*)root->l->data == 2);
 
-    REQUIRE(g_result.size() == 4);
-    REQUIRE(g_result == std::vector<int>{1, 2, 4, 3});
+    REQUIRE(root->r != NULL);
+    REQUIRE(*(int*)root->r->data == 3);
+
+    // 验证叶子
+    REQUIRE(*(int*)root->l->l->data == 4);
+    REQUIRE(*(int*)root->l->r->data == 5);
+    REQUIRE(*(int*)root->r->r->data == 6);
+
+    DestroyBiTreeLi(root);
   }
 
-  SECTION("InOrder Traversal") {
-    // 预期: 4 -> 2 -> 1 -> 3
-    InOrder(NULL, &root, BiTreeLiOps, capture_li_visit);
+  // 2. 测试所有遍历方式
+  SECTION("Traversals (Pre, In, Post, Level)") {
+    BiTreeLi root = fromPreAndInOrder(pre, in, elem_size, len);
+    REQUIRE(root != NULL);
 
-    REQUIRE(g_result.size() == 4);
-    REQUIRE(g_result == std::vector<int>{4, 2, 1, 3});
-  }
+    // --- PreOrder ---
+    g_visit_result.clear();
+    PreOrder(NULL, root, BiTreeLiOps, CaptureLiVisit);
+    std::vector<int> expected_pre = {1, 2, 4, 5, 3, 6};
+    REQUIRE(g_visit_result == expected_pre);
 
-  SECTION("PostOrder Traversal") {
-    // 预期: 4 -> 2 -> 3 -> 1
-    PostOrder(NULL, &root, BiTreeLiOps, capture_li_visit);
+    // --- InOrder ---
+    g_visit_result.clear();
+    InOrder(NULL, root, BiTreeLiOps, CaptureLiVisit);
+    std::vector<int> expected_in = {4, 2, 5, 1, 3, 6};
+    REQUIRE(g_visit_result == expected_in);
 
-    REQUIRE(g_result.size() == 4);
-    REQUIRE(g_result == std::vector<int>{4, 2, 3, 1});
+    // --- PostOrder ---
+    // 预期: 4, 5, 2, 6, 3, 1
+    g_visit_result.clear();
+    PostOrder(NULL, root, BiTreeLiOps, CaptureLiVisit);
+    std::vector<int> expected_post = {4, 5, 2, 6, 3, 1};
+    REQUIRE(g_visit_result == expected_post);
+
+    // --- LevelOrder (核心测试点: SqQueue 是否工作正常) ---
+    // 预期: 1, 2, 3, 4, 5, 6
+    g_visit_result.clear();
+
+    // 注意：LevelOrder 内部使用的是 EnQueue(que, root_handle)
+    // 这里的 root_handle 是 Node* 指针。
+    // SqQueue 的 elem_size 在 InitQueue 时被设为 sizeof(void*)
+    LevelOrder(NULL, root, BiTreeLiOps, CaptureLiVisit);
+
+    std::vector<int> expected_level = {1, 2, 3, 4, 5, 6};
+    REQUIRE(g_visit_result == expected_level);
+
+    DestroyBiTreeLi(root);
   }
 }
 
-TEST_CASE("Array Binary Tree (BiTreeArr)", "[array]") {
-  // 准备数据
-  // 数组: [1, 2, 3, 4, 5]
-  // 下标:  0, 1, 2, 3, 4
-  //
-  // 结构:       1 (idx 0)
-  //           /   \
-  //          2     3
-  //         / \
-  //        4   5
+// =========================================================
+// 测试用例：数组二叉树 (BiTreeArr)
+// =========================================================
 
-  int data[] = {1, 2, 3, 4, 5};
-  BiTreeArr arrTree;
-  arrTree.arr = data;
-  arrTree.elem_size = sizeof(int);
-  arrTree.size = 5;  // 只有5个元素
-  arrTree.capacity = 10;
+TEST_CASE("Array Binary Tree Operations", "[BiTreeArr]") {
+  // 构造一个完全二叉树数组
+  // Index: 0  1  2  3  4  5  6
+  // Value: 1  2  3  4  5  6  7
+  int data[] = {1, 2, 3, 4, 5, 6, 7};
 
-  g_result.clear();
+  BiTreeArr treeArr;
+  treeArr.arr = data;
+  treeArr.elem_size = sizeof(int);
+  treeArr.size = 7;
+  treeArr.capacity = 10;
 
-  // 数组树的根节点句柄通常是下标 0 (强转为 void*)
+  // 根节点的 handle 是 index 0
   void* root_handle = (void*)0;
 
-  SECTION("PreOrder Traversal") {
-    // 预期: 1 -> 2 -> 4 -> 5 -> 3
-    PreOrder(&arrTree, root_handle, BiTreeArrOps, capture_arr_visit);
+  SECTION("Level Order on Array Tree") {
+    g_visit_result.clear();
+    LevelOrder(&treeArr, root_handle, BiTreeArrOps, CaptureArrVisit);
 
-    REQUIRE(g_result.size() == 5);
-    REQUIRE(g_result == std::vector<int>{1, 2, 4, 5, 3});
+    std::vector<int> expected = {1, 2, 3, 4, 5, 6, 7};
+    REQUIRE(g_visit_result == expected);
   }
 
-  SECTION("InOrder Traversal") {
-    // 预期: 4 -> 2 -> 5 -> 1 -> 3
-    InOrder(&arrTree, root_handle, BiTreeArrOps, capture_arr_visit);
+  SECTION("PreOrder on Array Tree") {
+    // 1 -> 2 -> 4, 5 -> 3 -> 6, 7
+    g_visit_result.clear();
+    PreOrder(&treeArr, root_handle, BiTreeArrOps, CaptureArrVisit);
 
-    REQUIRE(g_result.size() == 5);
-    REQUIRE(g_result == std::vector<int>{4, 2, 5, 1, 3});
-  }
-
-  SECTION("PostOrder Traversal") {
-    // 预期: 4 -> 5 -> 2 -> 3 -> 1
-    PostOrder(&arrTree, root_handle, BiTreeArrOps, capture_arr_visit);
-
-    REQUIRE(g_result.size() == 5);
-    REQUIRE(g_result == std::vector<int>{4, 5, 2, 3, 1});
+    std::vector<int> expected = {1, 2, 4, 5, 3, 6, 7};
+    REQUIRE(g_visit_result == expected);
   }
 }
 
-TEST_CASE("Edge Cases", "[edge]") {
-  g_result.clear();
+// =========================================================
+// 测试用例：边缘情况与错误处理
+// =========================================================
 
-  SECTION("Empty Linked List Tree") {
-    PreOrder(NULL, NULL, BiTreeLiOps, capture_li_visit);
-    REQUIRE(g_result.empty());
+TEST_CASE("Edge Cases and Error Handling", "[Edge]") {
+  size_t elem_size = sizeof(int);
+
+  SECTION("Single Node Tree") {
+    int pre[] = {99};
+    int in[] = {99};
+    BiTreeLi root = fromPreAndInOrder(pre, in, elem_size, 1);
+
+    REQUIRE(root != NULL);
+    REQUIRE(*(int*)root->data == 99);
+    REQUIRE(root->l == NULL);
+    REQUIRE(root->r == NULL);
+
+    g_visit_result.clear();
+    LevelOrder(NULL, root, BiTreeLiOps, CaptureLiVisit);
+    REQUIRE(g_visit_result.size() == 1);
+    REQUIRE(g_visit_result[0] == 99);
+
+    DestroyBiTreeLi(root);
   }
 
-  SECTION("Empty Array Tree") {
-    BiTreeArr arrTree = {NULL, sizeof(int), 10, 0};  // size = 0
-    PreOrder(&arrTree, (void*)0, BiTreeArrOps, capture_arr_visit);
-    REQUIRE(g_result.empty());
+  SECTION("Invalid Input - Root Not Found") {
+    // Pre: 1, 2
+    // In:  3, 4 (没有 1)
+    int pre[] = {1, 2};
+    int in[] = {3, 4};
+
+    // 应该在 stderr 打印错误并返回 NULL
+    BiTreeLi root = fromPreAndInOrder(pre, in, elem_size, 2);
+
+    REQUIRE(root == NULL);
   }
 
-  SECTION("Array Tree with Missing Children (Sparse)") {
-    // 数组: [1, 2, 3] 但是 size 只设为 2
-    // 这意味着 3 (下标2) 应该被忽略，因为它 >= size
-    // 结构:   1
-    //        /
-    //       2   (3被截断)
+  SECTION("Invalid Input - Subtree Mismatch") {
+    // 根匹配，但右子树数据对不上
+    // Pre: 1, 2
+    // In:  1, 3 (InOrder 说右边是 3，Pre 说右边是 2)
+    int pre[] = {1, 2};
+    int in[] = {1, 3};
 
-    int data[] = {1, 2, 3};
-    BiTreeArr arrTree;
-    arrTree.arr = data;
-    arrTree.elem_size = sizeof(int);
-    arrTree.size = 2;  // 只包含前两个元素
+    BiTreeLi root = fromPreAndInOrder(pre, in, elem_size, 2);
 
-    InOrder(&arrTree, (void*)0, BiTreeArrOps, capture_arr_visit);
+    REQUIRE(root == NULL);
+  }
 
-    REQUIRE(g_result.size() == 2);
-    REQUIRE(g_result == std::vector<int>{2, 1});
+  SECTION("Empty Tree") {
+    BiTreeLi root = fromPreAndInOrder(NULL, NULL, elem_size, 0);
+    REQUIRE(root == NULL);
   }
 }
