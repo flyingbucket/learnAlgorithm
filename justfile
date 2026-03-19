@@ -1,67 +1,71 @@
-# 变量定义
 build_dir := "build"
 bin_dir   := "build/bin"
+c         := "" 
 
-# 默认指令：显示所有可用指令
+# 默认指令
 default:
     @just --list
 
-# ------------------------------------------------------------------------------
-# 基础构建指令
-# ------------------------------------------------------------------------------
-
-# 配置 CMake (生成 build 目录)
 setup:
-    cmake -B {{build_dir}} -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    @# 1. 如果指定了 c，检查是否需要清理旧构建（编译器切换检测）
+    @if [ -f "{{build_dir}}/CMakeCache.txt" ] && [ -n "{{c}}" ]; then \
+        current=$(grep "CMAKE_CXX_COMPILER:" {{build_dir}}/CMakeCache.txt | grep -v "NOTFOUND" | grep -c "{{c}}"); \
+        if [ "$current" -eq 0 ]; then \
+            echo "Compiler change detected! Cleaning build directory..."; \
+            rm -rf {{build_dir}}; \
+        fi \
+    fi
+    @# 2. 执行配置（核心修复：只有在目录不存在，或者显式指定了编译器时才运行 cmake）
+    @if [ ! -d "{{build_dir}}" ] || [ -n "{{c}}" ]; then \
+        echo "Configuring CMake..."; \
+        cmake -B {{build_dir}} \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            {{ if c != "" { "-DCMAKE_CXX_COMPILER=" + c } else { "" } }}; \
+    else \
+        echo "Build directory exists. Skipping reconfiguration to preserve current compiler."; \
+    fi
 
-# 编译所有目标 (Examples 和 Tests)
+# 编译所有 (依赖 setup)
 build: setup
     cmake --build {{build_dir}} -j $(nproc)
 
-# 交互式选择：列出所有二进制入口，选择并编译 (需要安装 fzf)
-build-p:
-    @if [ ! -d "{{bin_dir}}" ]; then just build; fi
+# 交互式选择并编译 (依赖 setup，而不是 build，避免全量编译)
+build-p: setup
     @target=$(ls {{bin_dir}} | fzf --prompt="Please select target > ") && \
-    cmake --build {{build_dir}} --target $target 
+    cmake --build {{build_dir}} --target $target
 
-# 删除build/
+# 清理
 clean:
     rm -rf {{build_dir}}
     @echo "Build directory removed."
 
-# ------------------------------------------------------------------------------
-# 运行与调试 (类 Cargo 体验)
-# ------------------------------------------------------------------------------
+symbolizer := `which llvm-symbolizer || which llvm-symbolizer-21`
 
-# 编译并运行特定的 target (如: just p test_DLinkList)
-p target:
-    @cmake --build {{build_dir}} --target {{target}}
+# 编译并运行特定 target (依赖 setup，确保环境就绪)
+p target: setup
+    @# 只编译这一个目标，速度更快
+    cmake --build {{build_dir}} --target {{target}}
     @echo "----------------------------------------"
     @./{{bin_dir}}/{{target}}
 
-# 交互式选择：列出所有可执行文件并选择运行 (需要安装 fzf)
-run:
-    @if [ ! -d "{{bin_dir}}" ]; then just build; fi
+# 交互式运行 (依赖 setup)
+run: setup
     @target=$(ls {{bin_dir}} | fzf --prompt="Please select target > ") && \
     cmake --build {{build_dir}} --target $target && \
     ./{{bin_dir}}/$target
 
-# ------------------------------------------------------------------------------
-# 测试与性能
-# ------------------------------------------------------------------------------
 
-# 运行所有自动化测试 (CTest)
+# 运行测试 (依赖 build，因为测试通常需要全量编译或者至少核心库编译)
 test: build
     cd {{build_dir}} && ctest --output-on-failure
 
-# 运行 Benchmark：只运行带有 [benchmark] 标签的测试用例. 用法: just bench <target_name> (如: just bench test_DLinkList)
-bench target:
+# 运行 Benchmark
+bench target: setup
     @cmake --build {{build_dir}} --target {{target}}
     @echo "Running Benchmarks for {{target}}..."
     @./{{bin_dir}}/{{target}} "[benchmark]" --benchmark-samples 100
 
-
-# 快速检查代码统计
+# 统计
 stats:
     @echo "HPP files: $(find include -name "*.hpp" | wc -l)"
     @echo "CPP files: $(find examples tests -name "*.cpp" | wc -l)"

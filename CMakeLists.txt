@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.16+)
 project(learnAlgorithm)
 
+#== compiler setup==
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fcolor-diagnostics)
+    message(STATUS "Configuring for Clang: Precision diagnostics enabled.")
+    add_compile_options(-fsanitize=address -g -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+    message(STATUS "Clang AddressSanitizer enabled!")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-fdiagnostics-color=always -fmax-errors=5)
+    message(STATUS "Configuring for GCC: Error limit set.")
+endif()
+
 # ==speed-up==
 # mold linker
 find_program(MOLD_PATH mold)
