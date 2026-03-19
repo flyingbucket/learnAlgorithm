@@ -31,4 +31,5 @@ TEST_CASE("DLinkList: Prior Operations", "[dlink]") {
     CHECK(DeletePrior(L, 1, val) == false);  // 不能删除头节点
     CHECK(InsertPrior(L, 0, val) == false);  // 非法索引
   }
+  DestroyDList(L);
 }

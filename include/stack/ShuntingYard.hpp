@@ -9,7 +9,7 @@
 #include "queue/SqQueue.hpp"
 #include "stack/SqStack.hpp"
 
-inline int _sym_code(char sym) {
+inline int sym_code_(char sym) {
   static int table[256] = {0};
   static int initialized = 0;
   if (!initialized) {
@@ -33,7 +33,7 @@ inline size_t infix_to_postfix(const char* infix_expr, char* result_buffer) {
   int valid_len = 0;
   for (int i = 0; infix_expr[i] != '\0'; i++) {
     char sym = infix_expr[i];
-    int t_code = _sym_code(sym);
+    int t_code = sym_code_(sym);
     len++;
     if (t_code == 0 || t_code == 3 || t_code == 4) {
       valid_len++;
@@ -55,7 +55,7 @@ inline size_t infix_to_postfix(const char* infix_expr, char* result_buffer) {
 
   for (int i = 0; infix_expr[i] != '\0'; i++) {
     char sym = infix_expr[i];
-    int code = _sym_code(sym);
+    int code = sym_code_(sym);
     switch (code) {
       case -1:
         break;
@@ -73,7 +73,7 @@ inline size_t infix_to_postfix(const char* infix_expr, char* result_buffer) {
 
       case 2: {
         char tmp = sym;
-        while (GetTop(sym_stack, &tmp) && _sym_code(tmp) > 1) {
+        while (GetTop(sym_stack, &tmp) && sym_code_(tmp) > 1) {
           Pop(sym_stack, &tmp);
           EnQueue(res_queue, &tmp);
         }
@@ -85,19 +85,21 @@ inline size_t infix_to_postfix(const char* infix_expr, char* result_buffer) {
       case 4: {
         char top_sym;
         while (GetTop(sym_stack, &top_sym) &&
-               _sym_code(top_sym) >= _sym_code(sym)) {
+               sym_code_(top_sym) >= sym_code_(sym)) {
           Pop(sym_stack, &top_sym);
           EnQueue(res_queue, &top_sym);
         }
         Push(sym_stack, &sym);
         break;
       }
+      default: {
+      }
     }
   }
 
   char top_sym;
   while (Pop(sym_stack, &top_sym)) {
-    if (_sym_code(top_sym) > 2) {
+    if (sym_code_(top_sym) > 2) {
       EnQueue(res_queue, &top_sym);
     }
   }
@@ -119,7 +121,7 @@ inline size_t infix_to_postfix(const char* infix_expr, char* result_buffer) {
 // 3: *, /, %
 // 1: +, -
 // 0: 未知/无效
-inline int _get_prec(char sym) {
+inline int get_prec_(char sym) {
   if (isalnum(sym)) return 99;  // 操作数优先级最高
 
   static int table[256] = {0};
@@ -136,7 +138,7 @@ inline int _get_prec(char sym) {
 }
 
 // 检查是否为非结合性运算符 (右侧同级需要加括号)
-inline int _is_non_associative(char sym) {
+inline int is_non_associative_(char sym) {
   return (sym == '-' || sym == '/' || sym == '%');
 }
 
@@ -155,7 +157,7 @@ typedef struct {
 // --- 核心函数 ---
 
 // 辅助：计算逻辑（Pass 1）
-inline size_t _calculate_len(const char* postfix) {
+inline size_t calculate_len_(const char* postfix) {
   size_t n = strlen(postfix);
   VirtualNode* stack = (VirtualNode*)malloc(sizeof(VirtualNode) * n);
   int top = -1;
@@ -180,15 +182,16 @@ inline size_t _calculate_len(const char* postfix) {
       VirtualNode r = stack[top--];
       VirtualNode l = stack[top--];
 
-      int curr_prec = _get_prec(sym);
+      int curr_prec = get_prec_(sym);
 
       // 判断括号
       int l_parens = (l.prec < curr_prec);
       int r_parens = (r.prec < curr_prec) ||
-                     (r.prec == curr_prec && _is_non_associative(sym));
+                     (r.prec == curr_prec && is_non_associative_(sym));
 
       // 计算新长度: (左) + 1(符号) + (右) + 括号
-      size_t new_len = l.len + 1 + r.len + 2 * (l_parens + r_parens);
+      size_t new_len =
+          l.len + 1 + r.len + static_cast<size_t>(2 * (l_parens + r_parens));
 
       // 入栈
       top++;
@@ -207,7 +210,7 @@ inline size_t _calculate_len(const char* postfix) {
 }
 
 // 辅助：构建逻辑（Pass 2）
-inline size_t _build_string(const char* postfix, char* result_buff) {
+inline size_t build_string_(const char* postfix, char* result_buff) {
   size_t n = strlen(postfix);
   RealNode* stack = (RealNode*)malloc(sizeof(RealNode) * n);
   int top = -1;
@@ -235,11 +238,11 @@ inline size_t _build_string(const char* postfix, char* result_buff) {
       RealNode r = stack[top--];
       RealNode l = stack[top--];
 
-      int curr_prec = _get_prec(sym);
+      int curr_prec = get_prec_(sym);
 
       int l_parens = (l.prec < curr_prec);
       int r_parens = (r.prec < curr_prec) ||
-                     (r.prec == curr_prec && _is_non_associative(sym));
+                     (r.prec == curr_prec && is_non_associative_(sym));
 
       // 计算所需内存
       size_t needed_size = strlen(l.expr) + strlen(r.expr) + 2 +
@@ -296,10 +299,10 @@ inline size_t postfix_to_infix(const char* postfix_expr, char* result_buff) {
   if (postfix_expr == NULL) return 0;
 
   if (result_buff == NULL) {
-    return _calculate_len(postfix_expr);
+    return calculate_len_(postfix_expr);
   }
 
-  return _build_string(postfix_expr, result_buff);
+  return build_string_(postfix_expr, result_buff);
 }
 
 #endif  // !INCLUDE_STACK_SHUNTINGYARD_HPP

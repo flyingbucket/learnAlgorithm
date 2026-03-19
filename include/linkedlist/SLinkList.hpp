@@ -166,6 +166,15 @@ inline bool ListDelete(LinkList& L, uint index) {
   return true;
 }
 
+inline void DestroyList(LinkList& L) {
+  LNode* p = L;
+  while (p != NULL) {
+    LNode* temp = p;
+    p = p->next;
+    free(temp);
+  }
+  L = NULL;
+}
 inline void PrintList(LinkList L) {
   if (L == NULL) {
     printf("List is NULL\n");

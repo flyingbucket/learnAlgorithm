@@ -33,6 +33,5 @@ TEST_CASE("SLinkList: Basic Operations", "[slink]") {
     CHECK(LengthWithoutHeadNode(L) == 1);
     CHECK(GetElem(L, 1)->data == 20);
   }
-
-  // 内存释放逻辑虽在hpp中未提供Destroy，但此处为示例
+  DestroyList(L);
 }

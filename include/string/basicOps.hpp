@@ -43,6 +43,14 @@ inline String* makeString(const char* str) {
   return s_new;
 }
 
+inline void DestroyString(String* s) {
+  if (s == NULL) return;
+
+  if (s->ch != NULL) {
+    free(s->ch);
+  }
+  free(s);
+}
 inline String* Concat(String* l, String* r) {
   if (l == NULL || r == NULL || l->ch == NULL || r->ch == NULL) {
     return NULL;

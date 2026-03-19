@@ -99,6 +99,9 @@ inline bool DestorySqQueue(SqQueue** q) {
   if (q == NULL || *q == NULL || (*q)->data == NULL) {
     return false;
   }
+  if ((*q)->data != NULL) {
+    free((*q)->data);
+  }
   free(*q);
   *q = NULL;
   return true;

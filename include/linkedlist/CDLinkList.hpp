@@ -141,4 +141,19 @@ inline bool DeletePrior(CDLinkList& L, int index, ElemType& val) {
   return true;
 }
 
+/**
+ * @brief 销毁循环双链表
+ */
+inline void DestroyCDList(CDLinkList& L) {
+  if (L == NULL) return;
+
+  DLNode* p = L->next;
+  while (p != L) {
+    DLNode* temp = p;
+    p = p->next;
+    free(temp);
+  }
+  free(L);
+  L = NULL;
+}
 #endif  // !LEARNCPP_PKGS_LINKLIST_CLINKLIST_H

@@ -18,6 +18,7 @@ TEST_CASE("Huffman Tree Building", "[huffman]") {
     int w[] = {};
     BiTreeLi root = BuildHuffman(w, 0);
     REQUIRE(root == NULL);
+    DestroyBiTreeLi(root);
   }
 
   SECTION("Single element array should return a single root node") {
@@ -27,6 +28,7 @@ TEST_CASE("Huffman Tree Building", "[huffman]") {
     REQUIRE(root != NULL);
     REQUIRE(GetWeight(root) == 42);
     REQUIRE(IsLeaf(root));  // 应该是叶子节点，没有子树
+    DestroyBiTreeLi(root);
   }
 
   SECTION("Normal array: properly combines weights and builds structure") {
@@ -77,5 +79,6 @@ TEST_CASE("Huffman Tree Building", "[huffman]") {
     REQUIRE(has_2_and_3);
     REQUIRE(IsLeaf(node_5->l));
     REQUIRE(IsLeaf(node_5->r));
+    DestroyBiTreeLi(root);
   }
 }

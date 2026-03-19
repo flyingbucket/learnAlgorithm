@@ -1,5 +1,7 @@
 #ifndef INCLUDE_STRING_KMP_HPP
 #define INCLUDE_STRING_KMP_HPP
+#include <alloca.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -56,7 +58,8 @@ inline int KMP(String* S, String* P) {
   if (S == NULL || P == NULL || S->len == 0 || P->len == 0) {
     return -1;
   }
-  int next[P->len];
+  // int next[P->len];
+  int* next = (int*)alloca(sizeof(int) * P->len);
   get_next(P, next);
   int i = 0, j = 0;
   while (i < S->len && j < P->len) {

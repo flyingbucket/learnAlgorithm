@@ -132,4 +132,19 @@ inline bool DeletePrior(DLinkList& L, uint index, ElemType& val) {
   return true;
 }
 
+/**
+ * @brief 销毁双链表
+ */
+inline void DestroyDList(DLinkList& L) {
+  if (L == NULL) return;
+
+  DLNode* p = L;
+  while (p != NULL) {
+    DLNode* temp = p;
+    p = p->next;
+    free(temp);
+  }
+  L = NULL;
+}
+
 #endif  // !LEARNCPP_PKGS_LINKLIST_DLINKLIST_H

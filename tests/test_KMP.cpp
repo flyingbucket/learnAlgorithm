@@ -12,6 +12,7 @@ TEST_CASE("get_next computes the correct next array", "[get_next]") {
     REQUIRE(next[0] == -1);
     REQUIRE(next[1] == 0);
     REQUIRE(next[2] == 0);
+    DestroyString(P);
   }
 
   SECTION("Repeating characters") {
@@ -22,6 +23,7 @@ TEST_CASE("get_next computes the correct next array", "[get_next]") {
     REQUIRE(next[1] == 0);
     REQUIRE(next[2] == 1);
     REQUIRE(next[3] == 2);
+    DestroyString(P);
   }
 
   SECTION("Mixed repeating patterns") {
@@ -33,6 +35,7 @@ TEST_CASE("get_next computes the correct next array", "[get_next]") {
     REQUIRE(next[2] == 0);
     REQUIRE(next[3] == 1);
     REQUIRE(next[4] == 2);
+    DestroyString(P);
   }
 }
 
@@ -48,12 +51,18 @@ TEST_CASE("KMP algorithm matches strings correctly", "[KMP]") {
 
     String* P3 = makeString("lo ");
     REQUIRE(3 == KMP(S, P3));  // 匹配在中间
+    DestroyString(S);
+    DestroyString(P1);
+    DestroyString(P2);
+    DestroyString(P3);
   }
 
   SECTION("Multiple occurrences (returns first match)") {
     String* S = makeString("ababa");
     String* P = makeString("aba");
     REQUIRE(0 == KMP(S, P));
+    DestroyString(S);
+    DestroyString(P);
   }
 
   SECTION("No matches") {
@@ -63,6 +72,9 @@ TEST_CASE("KMP algorithm matches strings correctly", "[KMP]") {
 
     String* P2 = makeString("abf");
     REQUIRE(KMP(S, P2) == -1);  // 部分匹配但不完全
+    DestroyString(S);
+    DestroyString(P1);
+    DestroyString(P2);
   }
 
   SECTION("Edge cases and boundary conditions") {
@@ -75,5 +87,8 @@ TEST_CASE("KMP algorithm matches strings correctly", "[KMP]") {
 
     REQUIRE(KMP(NULL, S) == -1);  // 空指针保护
     REQUIRE(KMP(S, NULL) == -1);
+    DestroyString(S);
+    DestroyString(P_too_long);
+    DestroyString(P_empty);
   }
 }

@@ -92,4 +92,5 @@ TEST_CASE("CDLinkList: Circularity and Indexing", "[cdlink]") {
     // 当 index = 4 时，4 % 3 = 1，同样是指向头节点，应该被拦截
     CHECK(DeletePrior(L, 4, val) == false);
   }
+  DestroyCDList(L);
 }
