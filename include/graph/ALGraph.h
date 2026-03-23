@@ -26,7 +26,7 @@ typedef struct ENode {
 typedef struct {
   BaseGraph bg;
   AdjList verts;
-  int n_vert, n_edge;
+  int n_verts, n_edges;
   int vert_capacity;
 } ALGraph;
 
