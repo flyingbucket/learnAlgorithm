@@ -17,8 +17,8 @@ typedef struct GraphInfoOps {
 
 typedef struct GraphQueryOps {
   bool (*adjacent)(void* G, VertexId v1, VertexId v2);
-  int (*first_neighbor)(void* G, VertexId v);
-  int (*next_neighbor)(void* G, VertexId v, VertexId w);
+  VertexId (*first_neighbor)(void* G, VertexId v);
+  VertexId (*next_neighbor)(void* G, VertexId v, VertexId w);
 } GraphQueryOps;
 
 typedef struct GraphMutateOps {
