@@ -89,18 +89,27 @@ add_src_library(impl_algo ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # ==examples==
 macro(add_dir_targets directory_path)
-    file(GLOB SOURCE_FILES "${directory_path}/*.cpp")
+    file(GLOB_RECURSE SOURCE_FILES "${directory_path}/*.cpp" "${directory_path}/*.c")
     foreach(src_file ${SOURCE_FILES})
-        get_filename_component(target_name ${src_file} NAME_WE)
-        if(NOT TARGET ${target_name}) # 防止重复定义
+        # 获取文件名 (如: 01)
+        get_filename_component(file_name ${src_file} NAME_WE)
+        # 获取父目录名 (如: chapter1)
+        get_filename_component(parent_dir ${src_file} DIRECTORY)
+        get_filename_component(folder_name ${parent_dir} NAME)
+
+        # 组合成唯一的 Target 名称: chapter1_01
+        set(target_name "${folder_name}_${file_name}")
+
+        if(NOT TARGET ${target_name})
             add_executable(${target_name} ${src_file})
             target_link_libraries(${target_name} PRIVATE impl_algo)
-            message(STATUS "Registered target: ${target_name}")
+ 
+            # 保持构建产物的目录结构
+            set_target_properties(${target_name} PROPERTIES 
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${folder_name}")
         endif()
     endforeach()
 endmacro()
-
-add_dir_targets(${CMAKE_CURRENT_SOURCE_DIR}/examples)
 
 # ==tests==
 enable_testing()
