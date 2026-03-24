@@ -27,7 +27,7 @@ static VertexId add_vert(void* G) {
 static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
-  if (!g->bg.iops->valid_vertex(G, v1) || g->bg.iops->valid_vertex(G, v2) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || g->bg.iops.valid_vertex(G, v2) ||
       v1 == v2)
     return false;
 
@@ -50,7 +50,7 @@ static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
 static bool remove_edge(void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
-  if (!g->bg.iops->valid_vertex(G, v1) || g->bg.iops->valid_vertex(G, v2) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || g->bg.iops.valid_vertex(G, v2) ||
       v1 == v2)
     return false;
   ENode* p = g->xlist[v1].firstout;
@@ -88,7 +88,7 @@ static bool remove_edge(void* G, VertexId v1, VertexId v2) {
 static bool delete_vert(void* G, VertexId v) {
   if (G == NULL) return false;
   CLGraph* g = (CLGraph*)G;
-  if (!g->bg.iops->valid_vertex(G, v)) return false;
+  if (!g->bg.iops.valid_vertex(G, v)) return false;
 
   ENode* p = g->xlist[v].firstout;
   while (p) {
@@ -250,7 +250,7 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
 WeightedGraphOps CLGRAPH_WOPS = {.get_edge_weight = get_edge_weight,
                                  .update_edge_weight = update_edge_weight};
 
-CLGraph* clgraph_create(int n_verts, int n_edges) {
+CLGraph* clgraph_create(int n_verts) {
   CLGraph* g = (CLGraph*)malloc(sizeof(CLGraph));
   if (!g) return NULL;
 

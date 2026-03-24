@@ -36,7 +36,7 @@ GraphInfoOps const ALGRAPH_IOPS = {
 static bool adjacent(void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
-  if (!g->bg.iops->valid_vertex(G, v1) || !g->bg.iops->valid_vertex(G, v2) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v2) ||
       v1 == v2)
     return false;
   bool found = false;
@@ -63,7 +63,7 @@ static int first_neighbor(void* G, VertexId v) {
 static int next_neighbor(void* G, VertexId v, VertexId w) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
-  if (!g->bg.iops->valid_vertex(G, v) || !g->bg.iops->valid_vertex(G, w)) {
+  if (!g->bg.iops.valid_vertex(G, w) || !g->bg.iops.valid_vertex(G, v)) {
     return -1;
   }
   ENode* edge_v = g->verts[v].firstarc;
@@ -247,16 +247,15 @@ ALGraph* algraph_create(int n_vert, int n_edge) {
   ALGraph* g = (ALGraph*)malloc(sizeof(ALGraph));
   if (!g) return NULL;
 
-  g->bg.iops = &ALGRAPH_IOPS;
-  g->bg.qops = &ALGRAPH_QOPS;
-  g->bg.mops = &ALGRAPH_MOPS;
-  g->bg.wops = &ALGRAPH_WOPS;
+  BaseGraph initial_bg = {.iops = ALGRAPH_IOPS,
+                          .qops = ALGRAPH_QOPS,
+                          .mops = ALGRAPH_MOPS,
+                          .wops = ALGRAPH_WOPS};
 
-  // 3. 初始化基本计数
+  g->bg = initial_bg;
   g->n_verts = 0;
   g->n_edges = 0;
 
-  // 4. 预分配顶点数组空间
   // 如果传入 n_vert > 0，则按需分配；否则默认为 0，等待 add_vert 触发 realloc
   g->vert_capacity = (n_vert > 0) ? n_vert : 4;
   g->verts = (VNode*)malloc(g->vert_capacity * sizeof(VNode));

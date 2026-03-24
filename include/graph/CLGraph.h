@@ -30,7 +30,7 @@ typedef struct CLGraph {
   int vert_capacity;
 } CLGraph;
 
-CLGraph* clgraph_create(int n_verts, int n_edges);
+CLGraph* clgraph_create(int n_verts);
 void destroy_clgraph(CLGraph* g);
 #ifdef __cplusplus
 }

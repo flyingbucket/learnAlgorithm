@@ -72,7 +72,7 @@ static bool m_delete_vert(void* G, VertexId v) {
 static bool m_add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
-  if (g->bg.iops->valid_vertex(G, v1) && g->bg.iops->valid_vertex(G, v2) &&
+  if (g->bg.iops.valid_vertex(G, v1) && g->bg.iops.valid_vertex(G, v2) &&
       v1 != v2) {
     g->adj[v1 * n + v2] = w;
     return true;
@@ -82,7 +82,7 @@ static bool m_add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
 static bool m_remove_edge(void* G, VertexId v1, VertexId v2) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
-  if (g->bg.iops->valid_vertex(G, v1) && g->bg.iops->valid_vertex(G, v2) &&
+  if (g->bg.iops.valid_vertex(G, v1) && g->bg.iops.valid_vertex(G, v2) &&
       v1 != v2) {
     g->adj[v1 * n + v2] = 0;
     return true;
@@ -100,14 +100,14 @@ static Weight m_update_edge_weight(void* G, VertexId v1, VertexId v2,
                                    Weight w) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
-  Weight old = g->bg.wops->get_edge_weight(G, v1, v2);
+  Weight old = g->bg.wops.get_edge_weight(G, v1, v2);
   g->adj[v1 * n + v2] = w;
   return old;
 }
 static Weight m_get_edge_weight(void* G, VertexId v1, VertexId v2) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
-  if (!g->bg.iops->valid_vertex(G, v1) || !g->bg.iops->valid_vertex(G, v1) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v1) ||
       v1 == v2)
     return -1;
   Weight w = g->adj[v1 * n + v2];
@@ -130,11 +130,12 @@ MGraph* mgraph_create(int n_verts) {
     return NULL;
   }
 
-  g->bg.iops = &MGRAPH_IOPS;
-  g->bg.qops = &MGRAPH_QOPS;
-  g->bg.wops = &MGRAPH_WOPS;
-  g->bg.mops = &MGRAPH_MOPS;
+  BaseGraph initial_bg = {.iops = MGRAPH_IOPS,
+                          .qops = MGRAPH_QOPS,
+                          .mops = MGRAPH_MOPS,
+                          .wops = MGRAPH_WOPS};
 
+  g->bg = initial_bg;
   return g;
 }
 

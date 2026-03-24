@@ -180,7 +180,7 @@ static const WeightedGraphOps AML_Wops = {
     .update_edge_weight = update_edge_weight};
 
 const BaseGraph AML_INTERFACE = {
-    .iops = &AML_Iops, .qops = &AML_Qops, .mops = &AML_Mops, .wops = &AML_Wops};
+    .iops = AML_Iops, .qops = AML_Qops, .mops = AML_Mops, .wops = AML_Wops};
 
 // --- 生命周期管理 ---
 

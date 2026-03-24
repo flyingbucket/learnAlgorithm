@@ -34,10 +34,10 @@ typedef struct WeightedGraphOps {
 } WeightedGraphOps;
 
 typedef struct {
-  const GraphInfoOps* iops;
-  const GraphQueryOps* qops;
-  const GraphMutateOps* mops;
-  const WeightedGraphOps* wops;
+  GraphInfoOps iops;
+  GraphQueryOps qops;
+  GraphMutateOps mops;
+  WeightedGraphOps wops;
 } BaseGraph;
 
 #ifdef __cplusplus
