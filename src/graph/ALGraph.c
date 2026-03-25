@@ -53,10 +53,8 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
 static int first_neighbor(void* G, VertexId v) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
-  for (int i = 0; i < g->n_verts; i++) {
-    if (g->verts[i].id == v) {
-      return g->verts[i].firstarc->adjvex;
-    }
+  if (v >= 0 && v < g->n_verts && g->verts[v].firstarc) {
+    return g->verts[v].firstarc->adjvex;
   }
   return -1;
 }
