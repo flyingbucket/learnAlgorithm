@@ -59,12 +59,18 @@ static const GraphQueryOps MGRAPH_QOPS = {
 };
 
 static VertexId m_add_vert(void* G) {
-  printf("Error: Not implemented");
+  printf(
+      "Warning: MGraph does not support dynamic scaling. This function does "
+      "nothing.\nIf you are calling this function in the init process, it's "
+      "all fine because all information is stored in the adjcancy matrix and "
+      "added to the graph through function `add_edge`.\n");
   (void)G;
   return -1;
 }
 static bool m_delete_vert(void* G, VertexId v) {
-  printf("Error: Not implemented");
+  printf(
+      "Warning: MGraph does not support dynamic expansion. This function does "
+      "nothing\n");
   (void)G;
   (void)v;
   return false;
@@ -118,7 +124,7 @@ static const WeightedGraphOps MGRAPH_WOPS = {
     .update_edge_weight = m_update_edge_weight,
 };
 
-MGraph* mgraph_create(int n_verts) {
+MGraph* mgraph_init(int n_verts) {
   MGraph* g = (MGraph*)malloc(sizeof(MGraph));
   if (!g) return NULL;
 

@@ -33,7 +33,7 @@ static void build_undirected_edge(ALGraph* alg, VertexId u, VertexId v,
 TEST_CASE("BFS Traversal Order with ALGraph (Strict Creation)",
           "[BFS][ALGraph]") {
   // 1. 分配空间 (此时 n_verts 为 0)
-  ALGraph* alg = algraph_create(5, 10);
+  ALGraph* alg = algraph_init(5);
   BaseGraph* bg = &alg->bg;
 
   // 2. 严格遵循原则：手动添加节点，使 ID 与索引匹配
@@ -88,7 +88,7 @@ TEST_CASE("BFS Traversal Order with ALGraph (Strict Creation)",
 // ============================================================================
 TEST_CASE("DFS Traversal Order with ALGraph (Strict Creation)",
           "[DFS][ALGraph]") {
-  ALGraph* alg = algraph_create(5, 10);
+  ALGraph* alg = algraph_init(5);
   BaseGraph* bg = &alg->bg;
 
   for (int i = 0; i < 5; i++) bg->mops.add_vert(alg);
@@ -122,7 +122,7 @@ TEST_CASE("DFS Traversal Order with ALGraph (Strict Creation)",
 // ============================================================================
 TEST_CASE("BFS Shortest Paths with ALGraph (Strict Creation)",
           "[SSSP][ALGraph]") {
-  ALGraph* alg = algraph_create(6, 20);
+  ALGraph* alg = algraph_init(6);
   BaseGraph* bg = &alg->bg;
 
   for (int i = 0; i < 6; i++) bg->mops.add_vert(alg);
@@ -152,7 +152,7 @@ TEST_CASE("BFS Shortest Paths with ALGraph (Strict Creation)",
   }
 
   SECTION("Test disconnected component") {
-    ALGraph* alg_unconn = algraph_create(3, 2);
+    ALGraph* alg_unconn = algraph_init(3);
     BaseGraph* bg_uc = &alg_unconn->bg;
 
     for (int i = 0; i < 3; i++) bg_uc->mops.add_vert(alg_unconn);

@@ -4,28 +4,28 @@
 extern "C" {
 #endif  // __cplusplus
 #include "GraphOps.h"
-struct VNode;
-struct ENode;
-typedef struct VNode {
+struct AMLVNode;
+struct AMLENode;
+typedef struct AMLVNode {
   void* data;
-  struct ENode* firstedge;
-} VNode;
-typedef struct ENode {
+  struct AMLENode* firstedge;
+} AMLVNode;
+typedef struct AMLENode {
   VertexId ivex, jvex;
-  struct ENode* ilink;
-  struct ENode* jlink;
+  struct AMLENode* ilink;
+  struct AMLENode* jlink;
   Weight w;
-} ENode;
+} AMLENode;
 
 typedef struct {
-  VNode* verts;
+  AMLVNode* verts;
   BaseGraph bg;
   int n_verts;
   int n_edges;
   int vert_capacity;
 } AMLGraph;
 
-AMLGraph* amlgraph_create(int n_verts);
+AMLGraph* amlgraph_init(int capacity);
 void amlgraph_destroy(AMLGraph* g);
 
 #ifdef __cplusplus

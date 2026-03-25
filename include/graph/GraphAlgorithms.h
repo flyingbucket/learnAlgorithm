@@ -9,9 +9,7 @@ extern "C" {
 typedef struct {
   void (*on_edge)(void* G, const BaseGraph* bg, VertexId tail, VertexId head,
                   Weight w, void* ctx);
-
   void (*on_vertex)(void* G, const BaseGraph* bg, VertexId v, void* ctx);
-
   void* user_context;
 } VisitorClosure;
 
@@ -28,6 +26,13 @@ void DFSTraverse(void* graph_context, const BaseGraph* graph_methods,
                  VisitorClosure visitor);
 void DFS(void* graph_context, const BaseGraph* graph_methods, VertexId start_v,
          bool* visited, VisitorClosure visitor);
+
+void Prim(void* graph_ori, const BaseGraph* graph_ori_methods, void* graph_mst,
+          const BaseGraph* graph_mst_methods);
+void Krustarl(void* graph_ori, const BaseGraph* graph_ori_methods,
+              void* graph_mst, const BaseGraph* graph_mst_methods);
+void Dijkstra(void);
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

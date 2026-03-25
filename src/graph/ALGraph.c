@@ -40,7 +40,7 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
       v1 == v2)
     return false;
   bool found = false;
-  ENode* edge = g->verts->firstarc;
+  ALENode* edge = g->verts->firstarc;
   while (edge != NULL) {
     if (edge->adjvex == v2) {
       found = true;
@@ -64,7 +64,7 @@ static int next_neighbor(void* G, VertexId v, VertexId w) {
   if (!g->bg.iops.valid_vertex(G, w) || !g->bg.iops.valid_vertex(G, v)) {
     return -1;
   }
-  ENode* edge_v = g->verts[v].firstarc;
+  ALENode* edge_v = g->verts[v].firstarc;
   while (edge_v != NULL && edge_v->adjvex != w) {
     edge_v = edge_v->nextarc;
   }
@@ -80,27 +80,26 @@ GraphQueryOps const ALGRAPH_QOPS = {
 static VertexId add_vert(void* G) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
+  ALVNode* new_node_ptr = &(g->verts[g->n_verts]);
   if (g->n_verts >= g->vert_capacity) {
     int new_capacity = (g->vert_capacity == 0) ? 4 : g->vert_capacity * 2;
-    VNode* temp = (VNode*)realloc(g->verts, sizeof(VNode) * new_capacity);
+    ALVNode* temp = (ALVNode*)realloc(g->verts, sizeof(ALVNode) * new_capacity);
     if (temp == NULL) return -1;
     g->verts = temp;
     g->vert_capacity = new_capacity;
+    new_node_ptr->data = NULL;
+    new_node_ptr->firstarc = NULL;
   }
 
-  VNode* new_node_ptr = &(g->verts[g->n_verts]);
-  new_node_ptr->data = NULL;
   new_node_ptr->id = g->n_verts;
-  new_node_ptr->firstarc = NULL;
-
   VertexId new_id = new_node_ptr->id;
   g->n_verts += 1;
   return new_id;
 }
 static inline void free_edges(ALGraph* g, VertexId v) {
   for (int i = 0; i < g->n_verts; i++) {
-    ENode* curr = g->verts[i].firstarc;
-    ENode* prev = NULL;
+    ALENode* curr = g->verts[i].firstarc;
+    ALENode* prev = NULL;
 
     while (curr != NULL) {
       bool should_free = false;
@@ -110,7 +109,7 @@ static inline void free_edges(ALGraph* g, VertexId v) {
       }
 
       if (should_free) {
-        ENode* tmp = curr;
+        ALENode* tmp = curr;
         if (prev == NULL) {
           g->verts[i].firstarc = curr->nextarc;
           curr = g->verts[i].firstarc;
@@ -152,7 +151,7 @@ static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
     return false;
   }
 
-  ENode* new_edge = (ENode*)malloc(sizeof(ENode));
+  ALENode* new_edge = (ALENode*)malloc(sizeof(ALENode));
   if (new_edge == NULL) return false;
 
   new_edge->adjvex = v2;
@@ -172,8 +171,8 @@ static bool remove_edge(void* G, VertexId v1, VertexId v2) {
     return false;
   }
 
-  ENode* curr = g->verts[v1].firstarc;
-  ENode* prev = NULL;
+  ALENode* curr = g->verts[v1].firstarc;
+  ALENode* prev = NULL;
 
   while (curr != NULL) {
     if (curr->adjvex == v2) {
@@ -207,7 +206,7 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
 
   if (v1 < 0 || v1 >= g->n_verts || v2 < 0 || v2 >= g->n_verts) return -1;
 
-  ENode* curr = g->verts[v1].firstarc;
+  ALENode* curr = g->verts[v1].firstarc;
   while (curr != NULL) {
     if (curr->adjvex == v2) {
       Weight old_w = curr->w;
@@ -226,7 +225,7 @@ static Weight get_edge_weight(void* G, VertexId v1, VertexId v2) {
 
   if (v1 < 0 || v1 >= g->n_verts || v2 < 0 || v2 >= g->n_verts) return -1;
 
-  ENode* curr = g->verts[v1].firstarc;
+  ALENode* curr = g->verts[v1].firstarc;
   while (curr != NULL) {
     if (curr->adjvex == v2) {
       return curr->w;
@@ -240,8 +239,7 @@ static const WeightedGraphOps ALGRAPH_WOPS = {
     .update_edge_weight = update_edge_weight,
     .get_edge_weight = get_edge_weight};
 
-ALGraph* algraph_create(int n_vert, int n_edge) {
-  // 1. 分配 ALGraph 结构体内存
+ALGraph* algraph_init(int capccity) {
   ALGraph* g = (ALGraph*)malloc(sizeof(ALGraph));
   if (!g) return NULL;
 
@@ -254,9 +252,8 @@ ALGraph* algraph_create(int n_vert, int n_edge) {
   g->n_verts = 0;
   g->n_edges = 0;
 
-  // 如果传入 n_vert > 0，则按需分配；否则默认为 0，等待 add_vert 触发 realloc
-  g->vert_capacity = (n_vert > 0) ? n_vert : 4;
-  g->verts = (VNode*)malloc(g->vert_capacity * sizeof(VNode));
+  g->vert_capacity = (capccity > 0) ? capccity : 4;
+  g->verts = (ALVNode*)malloc(g->vert_capacity * sizeof(ALVNode));
 
   if (!g->verts) {
     free(g);
@@ -269,7 +266,6 @@ ALGraph* algraph_create(int n_vert, int n_edge) {
     g->verts[i].data = NULL;
     g->verts[i].id = -1;
   }
-  (void)n_edge;
   return g;
 }
 
@@ -278,9 +274,9 @@ void algraph_destroy(ALGraph* g) {
 
   // 1. 释放所有边的链表节点
   for (int i = 0; i < g->n_verts; i++) {
-    ENode* curr = g->verts[i].firstarc;
+    ALENode* curr = g->verts[i].firstarc;
     while (curr != NULL) {
-      ENode* temp = curr;
+      ALENode* temp = curr;
       curr = curr->nextarc;
       free(temp);  // 释放边节点
     }

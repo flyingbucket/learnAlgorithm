@@ -8,20 +8,20 @@
 extern "C" {
 #endif  // __cplusplus
 
-struct VNode;
-struct ENode;
+struct ALVNode;
+struct ALENode;
 
-typedef struct VNode {
+typedef struct ALVNode {
   void* data;
   VertexId id;
-  struct ENode* firstarc;
-} VNode, *AdjList;
+  struct ALENode* firstarc;
+} ALVNode, *AdjList;
 
-typedef struct ENode {
+typedef struct ALENode {
   VertexId adjvex;
-  struct ENode* nextarc;
+  struct ALENode* nextarc;
   Weight w;
-} ENode;
+} ALENode;
 
 typedef struct {
   BaseGraph bg;
@@ -30,7 +30,7 @@ typedef struct {
   int vert_capacity;
 } ALGraph;
 
-ALGraph* algraph_create(int n_vert, int n_edge);
+ALGraph* algraph_init(int capacity);
 void algraph_destroy(ALGraph* G);
 
 #ifdef __cplusplus

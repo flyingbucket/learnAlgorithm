@@ -10,28 +10,28 @@
 static VertexId add_vert(void* G) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
+  VertexId new_id = g->n_verts;
   if (g->n_verts >= g->vert_capacity) {
     int new_capacity = (g->vert_capacity == 0) ? 4 : g->vert_capacity * 2;
-    VNode* tmp = (VNode*)realloc(g->xlist, new_capacity);
+    CLVNode* tmp = (CLVNode*)realloc(g->xlist, new_capacity);
     if (tmp == NULL) return -1;
     g->xlist = tmp;
     g->vert_capacity = new_capacity;
+    g->xlist[new_id].data = NULL;
+    g->xlist[new_id].firstin = NULL;
+    g->xlist[new_id].firstout = NULL;
   }
-  VertexId new_id = g->n_verts;
-  g->xlist[new_id].data = NULL;
-  g->xlist[new_id].firstin = NULL;
-  g->xlist[new_id].firstout = NULL;
   g->n_verts++;
   return new_id;
 }
 static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
-  if (!g->bg.iops.valid_vertex(G, v1) || g->bg.iops.valid_vertex(G, v2) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v2) ||
       v1 == v2)
     return false;
 
-  ENode* edge = (ENode*)malloc(sizeof(ENode));
+  CLENode* edge = (CLENode*)malloc(sizeof(CLENode));
   if (!edge) return false;
 
   edge->w = w;
@@ -50,11 +50,11 @@ static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
 static bool remove_edge(void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
-  if (!g->bg.iops.valid_vertex(G, v1) || g->bg.iops.valid_vertex(G, v2) ||
+  if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v2) ||
       v1 == v2)
     return false;
-  ENode* p = g->xlist[v1].firstout;
-  ENode* pre = NULL;
+  CLENode* p = g->xlist[v1].firstout;
+  CLENode* pre = NULL;
 
   // 在 v1 的出边链表中找到该边并移除
   while (p && p->headvex != v2) {
@@ -69,8 +69,8 @@ static bool remove_edge(void* G, VertexId v1, VertexId v2) {
     pre->tlink = p->tlink;
 
   // 在 v2 的入边链表中找到该边并移除
-  ENode* q = g->xlist[v2].firstin;
-  ENode* qpre = NULL;
+  CLENode* q = g->xlist[v2].firstin;
+  CLENode* qpre = NULL;
   while (q && q->tailvex != v1) {
     qpre = q;
     q = q->hlink;
@@ -90,15 +90,15 @@ static bool delete_vert(void* G, VertexId v) {
   CLGraph* g = (CLGraph*)G;
   if (!g->bg.iops.valid_vertex(G, v)) return false;
 
-  ENode* p = g->xlist[v].firstout;
+  CLENode* p = g->xlist[v].firstout;
   while (p) {
-    ENode* next = p->tlink;
+    CLENode* next = p->tlink;
     remove_edge(G, v, p->headvex);
     p = next;
   }
   p = g->xlist[v].firstin;
   while (p) {
-    ENode* next = p->hlink;
+    CLENode* next = p->hlink;
     remove_edge(G, p->tailvex, v);
     p = next;
   }
@@ -107,7 +107,7 @@ static bool delete_vert(void* G, VertexId v) {
   for (int i = 0; i < g->n_verts; i++) {
     if (i == v) continue;
 
-    ENode* edge = g->xlist[i].firstout;
+    CLENode* edge = g->xlist[i].firstout;
     while (edge) {
       if (edge->tailvex > v) edge->tailvex--;
       if (edge->headvex > v) edge->headvex--;
@@ -123,7 +123,7 @@ static bool delete_vert(void* G, VertexId v) {
   if (g->n_verts > 0 && 4 * g->n_verts < g->vert_capacity &&
       g->vert_capacity > 8) {
     int new_capacity = g->vert_capacity >> 1;
-    VNode* tmp = (VNode*)realloc(g->xlist, sizeof(VNode) * new_capacity);
+    CLVNode* tmp = (CLVNode*)realloc(g->xlist, sizeof(CLVNode) * new_capacity);
     if (tmp) {
       g->xlist = tmp;
       g->vert_capacity = new_capacity;
@@ -166,7 +166,7 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return false;
 
-  ENode* p = g->xlist[v1].firstout;
+  CLENode* p = g->xlist[v1].firstout;
   while (p) {
     if (p->headvex == v2) return true;
     p = p->tlink;
@@ -182,7 +182,7 @@ static int first_neighbor(void* G, VertexId v) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v)) return -1;
 
-  ENode* p = g->xlist[v].firstout;
+  CLENode* p = g->xlist[v].firstout;
   if (p) {
     return (int)p->headvex;
   }
@@ -198,7 +198,7 @@ static int next_neighbor(void* G, VertexId v, VertexId w) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v) || !valid_vertex(G, w) || v == w) return -1;
 
-  ENode* p = g->xlist[v].firstout;
+  CLENode* p = g->xlist[v].firstout;
 
   while (p && p->headvex != w) {
     p = p->tlink;
@@ -220,7 +220,7 @@ static Weight get_edge_weight(void* G, VertexId v1, VertexId v2) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return -1;
 
-  ENode* p = g->xlist[v1].firstout;
+  CLENode* p = g->xlist[v1].firstout;
   while (p) {
     if (p->headvex == v2) {
       return p->w;
@@ -235,7 +235,7 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return -1;
 
-  ENode* p = g->xlist[v1].firstout;
+  CLENode* p = g->xlist[v1].firstout;
   while (p) {
     if (p->headvex == v2) {
       Weight old_w = p->w;
@@ -250,15 +250,15 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
 WeightedGraphOps CLGRAPH_WOPS = {.get_edge_weight = get_edge_weight,
                                  .update_edge_weight = update_edge_weight};
 
-CLGraph* clgraph_create(int n_verts) {
+CLGraph* clgraph_init(int capacity) {
   CLGraph* g = (CLGraph*)malloc(sizeof(CLGraph));
   if (!g) return NULL;
 
-  g->n_verts = n_verts;
+  g->n_verts = 0;
   g->n_edges = 0;  // 初始边数为 0
-  g->vert_capacity = (n_verts > 8) ? n_verts : 8;
+  g->vert_capacity = (capacity > 8) ? capacity : 8;
 
-  g->xlist = (VNode*)malloc(sizeof(VNode) * g->vert_capacity);
+  g->xlist = (CLVNode*)malloc(sizeof(CLVNode) * g->vert_capacity);
   if (!g->xlist) {
     free(g);
     return NULL;
@@ -270,6 +270,10 @@ CLGraph* clgraph_create(int n_verts) {
     g->xlist[i].firstin = NULL;
     g->xlist[i].firstout = NULL;
   }
+  g->bg.iops = CLGRAPH_IOPS;
+  g->bg.qops = CLGRAPH_QOPS;
+  g->bg.mops = CLGRAPH_MOPS;
+  g->bg.wops = CLGRAPH_WOPS;
 
   return g;
 }
@@ -279,9 +283,9 @@ void destroy_clgraph(CLGraph* g) {
 
   // 遍历每个顶点，释放其所有的出边节点
   for (int i = 0; i < g->n_verts; i++) {
-    ENode* p = g->xlist[i].firstout;
+    CLENode* p = g->xlist[i].firstout;
     while (p) {
-      ENode* temp = p;
+      CLENode* temp = p;
       p = p->tlink;
       free(temp);
     }

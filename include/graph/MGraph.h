@@ -14,7 +14,7 @@ typedef struct MGraph {
   Weight* adj;
 } MGraph;
 
-MGraph* mgraph_create(int n_verts);
+MGraph* mgraph_init(int capacity);
 void mgraph_destroy(MGraph* g);
 #ifdef __cplusplus
 }

@@ -5,7 +5,7 @@
 
 TEST_CASE("MGraph Operations", "[MGraph]") {
   int n_verts = 5;
-  MGraph* g = mgraph_create(n_verts);
+  MGraph* g = mgraph_init(n_verts);
   REQUIRE(g != nullptr);
   REQUIRE(g->adj != nullptr);
 
