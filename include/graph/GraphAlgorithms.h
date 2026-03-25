@@ -6,6 +6,8 @@ extern "C" {
 #endif  // __cplusplus
 #include "GraphOps.h"
 
+// traverse
+
 typedef struct {
   void (*on_edge)(void* G, const BaseGraph* bg, VertexId tail, VertexId head,
                   Weight w, void* ctx);
@@ -27,10 +29,22 @@ void DFSTraverse(void* graph_context, const BaseGraph* graph_methods,
 void DFS(void* graph_context, const BaseGraph* graph_methods, VertexId start_v,
          bool* visited, VisitorClosure visitor);
 
-void Prim(void* graph_ori, const BaseGraph* graph_ori_methods, void* graph_mst,
-          const BaseGraph* graph_mst_methods);
-void Krustarl(void* graph_ori, const BaseGraph* graph_ori_methods,
-              void* graph_mst, const BaseGraph* graph_mst_methods);
+// mst
+
+typedef struct {
+  VertexId u;
+  VertexId v;
+  Weight w;
+} MSTEdge;
+
+typedef struct {
+  int component_count;
+  MSTEdge* edges;
+  int* compunent_offset;
+} MSTResult;
+
+MSTResult* Prim(void* graph_ori, const BaseGraph* graph_ori_methods);
+MSTResult* Krustarl(void* graph_ori, const BaseGraph* graph_ori_methods);
 void Dijkstra(void);
 
 #ifdef __cplusplus

@@ -11,6 +11,7 @@ typedef double Weight;
 
 typedef struct GraphInfoOps {
   int (*vertex_count)(void* G);
+  int (*edge_count)(void* G);
   bool (*valid_vertex)(void* G, VertexId v);
   bool (*directed)(void* G);
 } GraphInfoOps;
