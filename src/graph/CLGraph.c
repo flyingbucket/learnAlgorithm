@@ -142,6 +142,11 @@ static int vertex_count(void* G) {
   CLGraph* g = (CLGraph*)G;
   return g->n_verts;
 }
+static int edge_count(void* G) {
+  if (G == NULL) return 0;
+  CLGraph* g = (CLGraph*)G;
+  return g->n_edges;
+}
 static bool valid_vertex(void* G, VertexId v) {
   if (G == NULL) return false;
   CLGraph* g = (CLGraph*)G;
@@ -154,6 +159,7 @@ static bool directed(void* G) {
 }
 GraphInfoOps CLGRAPH_IOPS = {
     .directed = directed,
+    .edge_count = edge_count,
     .valid_vertex = valid_vertex,
     .vertex_count = vertex_count,
 };

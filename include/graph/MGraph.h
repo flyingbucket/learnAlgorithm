@@ -10,6 +10,7 @@ extern "C" {
 typedef struct MGraph {
   BaseGraph bg;
   int n_verts;
+  int n_edges;
   void** verts;
   Weight* adj;
 } MGraph;

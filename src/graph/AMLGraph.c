@@ -13,6 +13,11 @@ static int vertex_count(void* G) {
   return GET_AMLG(G)->n_verts;
 }
 
+static int edge_count(void* G) {
+  if (G == NULL) return -1;
+  return GET_AMLG(G)->n_edges;
+}
+
 static bool valid_vertex(void* G, VertexId v) {
   if (G == NULL) return -1;
   AMLGraph* g = GET_AMLG(G);
@@ -166,6 +171,7 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
 // --- 接口表挂载 ---
 
 static const GraphInfoOps AML_Iops = {.vertex_count = vertex_count,
+                                      .edge_count = edge_count,
                                       .valid_vertex = valid_vertex,
                                       .directed = is_directed};
 

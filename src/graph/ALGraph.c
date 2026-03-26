@@ -12,6 +12,11 @@ static int vertex_count(void* G) {
   ALGraph* g = (ALGraph*)G;
   return g->n_verts;
 }
+static int edge_count(void* G) {
+  if (G == NULL) return -1;
+  ALGraph* g = (ALGraph*)G;
+  return g->n_edges;
+}
 static bool valid_vertex(void* G, VertexId v) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
@@ -29,6 +34,7 @@ static bool directed(void* G) {
 
 GraphInfoOps const ALGRAPH_IOPS = {
     .vertex_count = vertex_count,
+    .edge_count = edge_count,
     .valid_vertex = valid_vertex,
     .directed = directed,
 };

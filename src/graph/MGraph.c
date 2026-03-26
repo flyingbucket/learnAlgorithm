@@ -10,6 +10,11 @@ static int m_vertex_count(void* G) {
   MGraph* g = (MGraph*)G;
   return g->n_verts;
 }
+static int m_edge_count(void* G) {
+  if (G == NULL) return -1;
+  MGraph* g = (MGraph*)G;
+  return g->n_edges;
+}
 static bool m_valid_vertex(void* G, VertexId v) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
@@ -25,6 +30,7 @@ static bool m_direct(void* G) {
 }
 static const GraphInfoOps MGRAPH_IOPS = {
     .vertex_count = m_vertex_count,
+    .edge_count = m_edge_count,
     .valid_vertex = m_valid_vertex,
     .directed = m_direct,
 };
