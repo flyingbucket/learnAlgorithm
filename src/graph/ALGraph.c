@@ -8,17 +8,17 @@
 
 #include "graph/GraphOps.h"
 
-static int vertex_count(void* G) {
+static int vertex_count(const void* G) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
   return g->n_verts;
 }
-static int edge_count(void* G) {
+static int edge_count(const void* G) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
   return g->n_edges;
 }
-static bool valid_vertex(void* G, VertexId v) {
+static bool valid_vertex(const void* G, VertexId v) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
   for (int i = 0; i < g->n_verts; i++) {
@@ -27,7 +27,7 @@ static bool valid_vertex(void* G, VertexId v) {
   }
   return false;
 }
-static bool directed(void* G) {
+static bool directed(const void* G) {
   printf("Error: Not Implemented");
   (void)G;
   return false;
@@ -40,7 +40,7 @@ GraphInfoOps const ALGRAPH_IOPS = {
     .directed = directed,
 };
 
-static bool adjacent(void* G, VertexId v1, VertexId v2) {
+static bool adjacent(const void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
   if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v2) ||
@@ -57,7 +57,7 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
   }
   return found;
 }
-static Edge first_neighbor(void* G, VertexId v) {
+static Edge first_neighbor(const void* G, VertexId v) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   if (G == NULL) return invalid_edge;
   ALGraph* g = (ALGraph*)G;
@@ -71,7 +71,7 @@ static Edge first_neighbor(void* G, VertexId v) {
   }
   return invalid_edge;
 }
-static Edge next_neighbor(void* G, VertexId v, VertexId w) {
+static Edge next_neighbor(const void* G, VertexId v, VertexId w) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   if (G == NULL) return invalid_edge;
   ALGraph* g = (ALGraph*)G;
@@ -238,7 +238,7 @@ static Weight update_edge_weight(void* G, VertexId v1, VertexId v2, Weight w) {
 }
 
 // 获取边权：找到则返回权值，否则返回 -1
-static Weight get_edge_weight(void* G, VertexId v1, VertexId v2) {
+static Weight get_edge_weight(const void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return -1;
   ALGraph* g = (ALGraph*)G;
 

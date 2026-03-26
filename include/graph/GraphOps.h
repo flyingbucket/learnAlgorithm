@@ -16,16 +16,16 @@ typedef struct {
 } Edge;
 
 typedef struct GraphInfoOps {
-  int (*vertex_count)(void* G);
-  int (*edge_count)(void* G);
-  bool (*valid_vertex)(void* G, VertexId v);
-  bool (*directed)(void* G);
+  int (*vertex_count)(const void* G);
+  int (*edge_count)(const void* G);
+  bool (*valid_vertex)(const void* G, VertexId v);
+  bool (*directed)(const void* G);
 } GraphInfoOps;
 
 typedef struct GraphQueryOps {
-  bool (*adjacent)(void* G, VertexId v1, VertexId v2);
-  Edge (*first_neighbor)(void* G, VertexId v);
-  Edge (*next_neighbor)(void* G, VertexId v, VertexId w);
+  bool (*adjacent)(const void* G, VertexId v1, VertexId v2);
+  Edge (*first_neighbor)(const void* G, VertexId v);
+  Edge (*next_neighbor)(const void* G, VertexId v, VertexId w);
 } GraphQueryOps;
 
 typedef struct GraphMutateOps {
@@ -37,7 +37,7 @@ typedef struct GraphMutateOps {
 
 typedef struct WeightedGraphOps {
   Weight (*update_edge_weight)(void* G, VertexId v1, VertexId v2, Weight w);
-  Weight (*get_edge_weight)(void* G, VertexId v1, VertexId v2);
+  Weight (*get_edge_weight)(const void* G, VertexId v1, VertexId v2);
 } WeightedGraphOps;
 
 typedef struct {

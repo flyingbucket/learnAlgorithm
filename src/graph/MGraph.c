@@ -7,16 +7,16 @@
 
 #include "graph/GraphOps.h"
 
-static int m_vertex_count(void* G) {
+static int m_vertex_count(const void* G) {
   MGraph* g = (MGraph*)G;
   return g->n_verts;
 }
-static int m_edge_count(void* G) {
+static int m_edge_count(const void* G) {
   if (G == NULL) return -1;
   MGraph* g = (MGraph*)G;
   return g->n_edges;
 }
-static bool m_valid_vertex(void* G, VertexId v) {
+static bool m_valid_vertex(const void* G, VertexId v) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
   if (v >= 0 && v < n)
@@ -24,7 +24,7 @@ static bool m_valid_vertex(void* G, VertexId v) {
   else
     return false;
 }
-static bool m_direct(void* G) {
+static bool m_direct(const void* G) {
   (void)G;
   printf("Error: Not implemented");
   return true;
@@ -36,13 +36,13 @@ static const GraphInfoOps MGRAPH_IOPS = {
     .directed = m_direct,
 };
 
-static bool m_adjacent(void* G, VertexId v1, VertexId v2) {
+static bool m_adjacent(const void* G, VertexId v1, VertexId v2) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
   Weight(*adj)[n] = (Weight(*)[n])g->adj;
   return adj[v1][v2] != 0;
 }
-static Edge m_first_neighbor(void* G, VertexId v) {
+static Edge m_first_neighbor(const void* G, VertexId v) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
@@ -59,7 +59,7 @@ static Edge m_first_neighbor(void* G, VertexId v) {
   }
   return invalid_edge;
 }
-static Edge m_next_neighbor(void* G, VertexId v, VertexId w) {
+static Edge m_next_neighbor(const void* G, VertexId v, VertexId w) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
@@ -133,7 +133,7 @@ static Weight m_update_edge_weight(void* G, VertexId v1, VertexId v2,
   g->adj[v1 * n + v2] = w;
   return old;
 }
-static Weight m_get_edge_weight(void* G, VertexId v1, VertexId v2) {
+static Weight m_get_edge_weight(const void* G, VertexId v1, VertexId v2) {
   MGraph* g = (MGraph*)G;
   int n = g->n_verts;
   if (!g->bg.iops.valid_vertex(G, v1) || !g->bg.iops.valid_vertex(G, v1) ||

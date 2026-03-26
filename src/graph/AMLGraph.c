@@ -9,28 +9,28 @@
 
 #define GET_AMLG(G) ((AMLGraph*)(G))
 
-static int vertex_count(void* G) {
+static int vertex_count(const void* G) {
   if (G == NULL) return -1;
   return GET_AMLG(G)->n_verts;
 }
 
-static int edge_count(void* G) {
+static int edge_count(const void* G) {
   if (G == NULL) return -1;
   return GET_AMLG(G)->n_edges;
 }
 
-static bool valid_vertex(void* G, VertexId v) {
+static bool valid_vertex(const void* G, VertexId v) {
   if (G == NULL) return -1;
   AMLGraph* g = GET_AMLG(G);
   return v >= 0 && v < g->n_verts;
 }
 
-static bool is_directed(void* G) {
+static bool is_directed(const void* G) {
   (void)G;
   return false;  // 邻接多重表固定表示无向图
 }
 
-static bool adjacent(void* G, VertexId v1, VertexId v2) {
+static bool adjacent(const void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return false;
   AMLGraph* g = GET_AMLG(G);
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return false;
@@ -44,7 +44,7 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
   return false;
 }
 
-static Edge first_neighbor(void* G, VertexId v) {
+static Edge first_neighbor(const void* G, VertexId v) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   AMLGraph* g = GET_AMLG(G);
   if (!valid_vertex(G, v) || !g->verts[v].firstedge) return invalid_edge;
@@ -59,7 +59,7 @@ static Edge first_neighbor(void* G, VertexId v) {
   return res;
 }
 
-static Edge next_neighbor(void* G, VertexId v, VertexId w) {
+static Edge next_neighbor(const void* G, VertexId v, VertexId w) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   AMLGraph* g = GET_AMLG(G);
   if (!valid_vertex(G, v)) return invalid_edge;
@@ -158,7 +158,7 @@ static bool remove_edge(void* G, VertexId v1, VertexId v2) {
   return true;
 }
 
-static Weight get_edge_weight(void* G, VertexId v1, VertexId v2) {
+static Weight get_edge_weight(const void* G, VertexId v1, VertexId v2) {
   AMLGraph* g = GET_AMLG(G);
   AMLENode* p = g->verts[v1].firstedge;
   while (p) {

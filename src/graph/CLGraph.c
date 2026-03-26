@@ -138,22 +138,22 @@ GraphMutateOps CLGRAPH_MOPS = {.add_vert = add_vert,
                                .add_edge = add_edge,
                                .remove_edge = remove_edge};
 
-static int vertex_count(void* G) {
+static int vertex_count(const void* G) {
   if (G == NULL) return 0;
   CLGraph* g = (CLGraph*)G;
   return g->n_verts;
 }
-static int edge_count(void* G) {
+static int edge_count(const void* G) {
   if (G == NULL) return 0;
   CLGraph* g = (CLGraph*)G;
   return g->n_edges;
 }
-static bool valid_vertex(void* G, VertexId v) {
+static bool valid_vertex(const void* G, VertexId v) {
   if (G == NULL) return false;
   CLGraph* g = (CLGraph*)G;
   return v >= 0 && v < g->n_verts;
 }
-static bool directed(void* G) {
+static bool directed(const void* G) {
   printf("Error:Not implemented");
   (void)G;
   return false;
@@ -169,7 +169,7 @@ GraphInfoOps CLGRAPH_IOPS = {
  * 判断是否存在从 v1 到 v2 的边
  * 效率：O(out_degree(v1))
  */
-static bool adjacent(void* G, VertexId v1, VertexId v2) {
+static bool adjacent(const void* G, VertexId v1, VertexId v2) {
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return false;
 
@@ -185,7 +185,7 @@ static bool adjacent(void* G, VertexId v1, VertexId v2) {
  * 找到顶点 v 的第一个邻接点
  * 效率：O(1) 找到边，O(1) 返回 ID
  */
-static Edge first_neighbor(void* G, VertexId v) {
+static Edge first_neighbor(const void* G, VertexId v) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v)) return invalid_edge;
@@ -207,7 +207,7 @@ static Edge first_neighbor(void* G, VertexId v) {
  * 找到顶点 v 相对于邻接点 w 的下一个邻接点
  * 效率：O(out_degree(v))
  */
-static Edge next_neighbor(void* G, VertexId v, VertexId w) {
+static Edge next_neighbor(const void* G, VertexId v, VertexId w) {
   Edge invalid_edge = {.t = -1, .h = -1, .w = INFINITY};
   if (G == NULL) return invalid_edge;
   CLGraph* g = (CLGraph*)G;
@@ -236,7 +236,7 @@ GraphQueryOps CLGRAPH_QOPS = {.adjacent = adjacent,
                               .first_neighbor = first_neighbor,
                               .next_neighbor = next_neighbor};
 
-static Weight get_edge_weight(void* G, VertexId v1, VertexId v2) {
+static Weight get_edge_weight(const void* G, VertexId v1, VertexId v2) {
   if (G == NULL) return -1;
   CLGraph* g = (CLGraph*)G;
   if (!valid_vertex(G, v1) || !valid_vertex(G, v2) || v1 == v2) return -1;
