@@ -1,13 +1,13 @@
 #include <catch2/catch.hpp>
 
-#include "tree/UFset.hpp"
+#include "tree/UFset.h"
 
 TEST_CASE("TreeUFset: Basic Initialization and Find", "[UFset]") {
   UFset s = nullptr;
   uint len = 5;
 
   SECTION("Initial should allocate and set all elements to -1") {
-    REQUIRE(Initial(&s, len) == true);
+    REQUIRE(InitUFset(&s, len) == true);
     REQUIRE(s != nullptr);
 
     for (uint i = 0; i < len; i++) {
@@ -17,7 +17,7 @@ TEST_CASE("TreeUFset: Basic Initialization and Find", "[UFset]") {
   }
 
   SECTION("Find on initial disjoint sets should return themselves") {
-    REQUIRE(Initial(&s, len) == true);
+    REQUIRE(InitUFset(&s, len) == true);
 
     for (uint i = 0; i < len; i++) {
       REQUIRE(Find(s, i) == static_cast<int>(i));
@@ -29,7 +29,7 @@ TEST_CASE("TreeUFset: Basic Initialization and Find", "[UFset]") {
 TEST_CASE("TreeUFset: Union Operations", "[UFset]") {
   UFset s = nullptr;
   uint len = 5;
-  REQUIRE(Initial(&s, len) == true);
+  REQUIRE(InitUFset(&s, len) == true);
 
   SECTION("Union of two disjoint elements") {
     // 初始状态: s[0]=-1, s[1]=-1
@@ -71,7 +71,7 @@ TEST_CASE("TreeUFset: Union Operations", "[UFset]") {
 TEST_CASE("TreeUFset: Path Compression", "[UFset]") {
   UFset s = nullptr;
   uint len = 10;
-  REQUIRE(Initial(&s, len) == true);
+  REQUIRE(InitUFset(&s, len) == true);
 
   SECTION("Find should flatten the tree structure") {
     // 手动构造一条极端的链表状树: 0 -> 1 -> 2 -> 3 (其中3是根，大小为-4)
