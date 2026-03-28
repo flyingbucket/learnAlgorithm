@@ -21,16 +21,15 @@ static int edge_count(const void* G) {
 static bool valid_vertex(const void* G, VertexId v) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
-  for (int i = 0; i < g->n_verts; i++) {
-    int id = g->verts[i].id;
-    if (i == id && v == id) return true;
-  }
-  return false;
+  if (v >= 0 && v < g->n_verts)
+    return true;
+  else
+    return false;
 }
 static bool directed(const void* G) {
-  printf("Error: Not Implemented");
-  (void)G;
-  return false;
+  assert(G != NULL && "Graph pointer can not be NULL!");
+  ALGraph* g = (ALGraph*)G;
+  return g->directed;
 }
 
 GraphInfoOps const ALGRAPH_IOPS = {
@@ -47,7 +46,7 @@ static bool adjacent(const void* G, VertexId v1, VertexId v2) {
       v1 == v2)
     return false;
   bool found = false;
-  ALENode* edge = g->verts->firstarc;
+  ALENode* edge = g->verts[v1].firstarc;
   while (edge != NULL) {
     if (edge->adjvex == v2) {
       found = true;
@@ -132,10 +131,8 @@ static VertexId add_vert(void* G) {
   new_node_ptr->data = NULL;
   new_node_ptr->firstarc = NULL;
 
-  new_node_ptr->id = g->n_verts;
-  VertexId new_id = new_node_ptr->id;
   g->n_verts += 1;
-  return new_id;
+  return g->n_verts - 1;
 }
 static inline void free_edges(ALGraph* g, VertexId v) {
   for (int i = 0; i < g->n_verts; i++) {
@@ -178,12 +175,17 @@ static bool delete_vert(void* G, VertexId v) {
   free_edges(g, v);
   for (int i = v; i < g->n_verts - 1; i++) {
     g->verts[i] = g->verts[i + 1];
-    g->verts[i].id = i;
   }
 
   g->n_verts--;
   return true;
 }
+
+/*
+ * adding the same edge more than one time will break the the constancy
+ * between n_edges and the real edge linklist in the graph and pollibly
+ * cause UNDEFINED BEAHVIOR
+ */
 static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
   if (G == NULL) return false;
   ALGraph* g = (ALGraph*)G;
@@ -191,7 +193,8 @@ static bool add_edge(void* G, VertexId v1, VertexId v2, Weight w) {
   if (v1 < 0 || v1 >= g->n_verts || v2 < 0 || v2 >= g->n_verts) {
     return false;
   }
-
+  bool duplicated = adjacent(G, v1, v2);
+  assert(duplicated == false && "Duplicate edge detected!");
   ALENode* new_edge = (ALENode*)malloc(sizeof(ALENode));
   if (new_edge == NULL) return false;
 
@@ -305,7 +308,6 @@ ALGraph* algraph_init(int capccity) {
   for (int i = 0; i < g->vert_capacity; i++) {
     g->verts[i].firstarc = NULL;
     g->verts[i].data = NULL;
-    g->verts[i].id = -1;
   }
   return g;
 }

@@ -13,7 +13,6 @@ struct ALENode;
 
 typedef struct ALVNode {
   void* data;
-  VertexId id;
   struct ALENode* firstarc;
 } ALVNode, *AdjList;
 

@@ -1,5 +1,6 @@
 #include "graph/MGraph.h"
 
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,9 +26,10 @@ static bool m_valid_vertex(const void* G, VertexId v) {
     return false;
 }
 static bool m_direct(const void* G) {
-  (void)G;
-  printf("Error: Not implemented");
-  return true;
+  assert(G != NULL && "Graph pointer cannot be NULL");
+  MGraph* g = (MGraph*)G;
+
+  return g->directed;
 }
 static const GraphInfoOps MGRAPH_IOPS = {
     .vertex_count = m_vertex_count,
@@ -116,11 +118,13 @@ static const GraphQueryOps MGRAPH_QOPS = {
 };
 
 static VertexId m_add_vert(void* G) {
+#ifndef NDEBUG
   printf(
       "Warning: MGraph does not support dynamic scaling. This function does "
       "nothing.\nIf you are calling this function in the init process, it's "
       "all fine because all information is stored in the adjcancy matrix and "
       "added to the graph through function `add_edge`.\n");
+#endif  // !NDEBUG
   (void)G;
   return -1;
 }
