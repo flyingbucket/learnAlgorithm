@@ -6,11 +6,10 @@ bench_dir := "build_bench"
 default:
 	@just --list
 
-setup compiler="":
+setup compiler="" type="Debug":
     #!/usr/bin/env bash
     set -e
     c_val="{{compiler}}"
-    
     if [ -n "$c_val" ]; then
         if [ "$c_val" = "clang" ]; then
             c_comp="clang"; cxx_comp="clang++"
@@ -19,47 +18,37 @@ setup compiler="":
         else
             c_comp="$c_val"; cxx_comp="$c_val"
         fi
-        echo "Using C compiler:   $c_comp"
-        echo "Using CXX compiler: $cxx_comp"
-    else
-        echo "Using default system compilers (no override)."
     fi
+    current_type_file="{{build_dir}}/.build_type"
+    last_type=""
+    [ -f "$current_type_file" ] && last_type=$(cat "$current_type_file")
 
-    if [ ! -d "{{build_dir}}" ] || [ -n "$c_val" ]; then
-        echo "Configuring CMake..."
-        args=(-B "{{build_dir}}" -DCMAKE_BUILD_TYPE=RelWithDebInfo)
+    if [ ! -d "{{build_dir}}" ] || [ -n "$c_val" ] || [ "{{type}}" != "$last_type" ]; then
+        echo "--- Configuring CMake (Type: {{type}}) ---"
+        args=(-B "{{build_dir}}" -DCMAKE_BUILD_TYPE={{type}})
         [ -n "$c_comp" ] && args+=("-DCMAKE_C_COMPILER=$c_comp")
         [ -n "$cxx_comp" ] && args+=("-DCMAKE_CXX_COMPILER=$cxx_comp")
+        
         cmake "${args[@]}"
+        mkdir -p "{{build_dir}}"
+        echo "{{type}}" > "$current_type_file"
     else
-        echo "Build directory exists. Skipping reconfiguration."
+        echo "Build directory exists with same config. Skipping reconfiguration."
     fi
 
-
-build compiler="":
-	#!/usr/bin/env bash
-	just setup {{compiler}}
-	threads=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-	cmake --build {{build_dir}} -j "$threads"
-
-build-p compiler="":
-	#!/usr/bin/env bash
-	just setup {{compiler}}
-	target=$(ls {{bin_dir}} 2>/dev/null | fzf --prompt="Please select target > ")
-	if [ -n "$target" ]; then
-		cmake --build {{build_dir}} --target "$target"
-	fi
-
-p target compiler="":
-	#!/usr/bin/env bash
-	just setup {{compiler}}
-	cmake --build {{build_dir}} --target "{{target}}"
-	echo "----------------------------------------"
-	./{{bin_dir}}/{{target}}
-
-run compiler="":
+build:
     #!/usr/bin/env bash
-    just setup {{compiler}}
+    set -e
+    if [ ! -d "{{build_dir}}" ]; then
+        echo "Error: Build directory not found. Please run 'just setup' first."
+        exit 1
+    fi
+    threads=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    cmake --build {{build_dir}} -j "$threads"
+
+run:
+    #!/usr/bin/env bash
+    just build
 
     selected_path=$(find {{bin_dir}} -executable -type f | fzf --prompt="Select target > ")
 
@@ -72,16 +61,15 @@ run compiler="":
     fi
 
 # --- 测试与性能 ---
-test compiler="":
+test :
 	#!/usr/bin/env bash
-	just build {{compiler}}
+	just build
 	cd {{build_dir}} && ctest --output-on-failure
 
 bench compiler="" asan_toggle="no-asan":
     #!/usr/bin/env bash
     set -e
     
-    # 1. 处理 ASan 开关逻辑
     if [ "{{asan_toggle}}" = "asan" ]; then
         asan_flag="ON"
         mode_msg="ASan: ON (Debug Mode)"
@@ -90,11 +78,14 @@ bench compiler="" asan_toggle="no-asan":
         mode_msg="ASan: OFF (Performance Mode)"
     fi
 
-    # 2. 配置环境 (如果目录不存在，或显式指定了参数，则重新配置)
     c_val="{{compiler}}"
     if [ ! -d "{{bench_dir}}" ] || [ -n "$c_val" ] || [ -n "{{asan_toggle}}" ]; then
         echo "--- Configuring Benchmark Build ($mode_msg) ---"
-        args=(-B "{{bench_dir}}" -DCMAKE_BUILD_TYPE=Release -DUSE_ASAN=$asan_flag -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+        args=(-B "{{bench_dir}}" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DUSE_ASAN=$asan_flag \
+          -DBUILD_BENCHMARKS=ON \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
         
         if [ "$c_val" = "clang" ]; then
             args+=("-DCMAKE_C_COMPILER=clang" "-DCMAKE_CXX_COMPILER=clang++")
@@ -104,7 +95,7 @@ bench compiler="" asan_toggle="no-asan":
         cmake "${args[@]}"
     fi
 
-    # 3. 交互式选择源码
+    # 交互式选择源码
     selected_cpp=$(find benchmarks -name "bench_*.cpp" ! -name "bench_main.cpp" | fzf --prompt="Select Benchmark Source ($mode_msg) > ")
 
     if [ -n "$selected_cpp" ]; then

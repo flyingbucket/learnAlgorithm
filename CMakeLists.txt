@@ -136,25 +136,38 @@ foreach(test_src ${TEST_SOURCES})
 endforeach()
 
 # == benchmarks ==
-set(BENCH_MAIN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bench_main.cpp")
-add_library(catch2_bench STATIC ${BENCH_MAIN_SRC})
-# 确保宏定义正确传播
-target_compile_definitions(catch2_bench PUBLIC CATCH_CONFIG_ENABLE_BENCHMARKING)
+option(BUILD_BENCHMARKS "Build benchmark targets" OFF)
+option(IDE_SUPPORT "Enable all targets for clangd indexing" ON)
 
-file(GLOB BENCH_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bench_*.cpp")
+if(IDE_SUPPORT OR BUILD_BENCHMARKS)
+    message(STATUS "Configuring Benchmarks (IDE_SUPPORT=${IDE_SUPPORT}, BUILD_BENCHMARKS=${BUILD_BENCHMARKS})")
 
-foreach(bench_src ${BENCH_SOURCES})
-    get_filename_component(bench_name ${bench_src} NAME_WE)
+    set(BENCH_MAIN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bench_main.cpp")
     
-    # 【关键修改】排除 bench_main 本身，避免重复定义
-    if(NOT ${bench_name} STREQUAL "bench_main")
-        add_executable(${bench_name} ${bench_src})
-        target_link_libraries(${bench_name} PRIVATE catch2_bench impl_algo)
-        
-        set_target_properties(${bench_name} PROPERTIES 
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/benchmarks"
-        )
-        # 建议直接在 target 上加优化开关，而不是 COMPILE_FLAGS（那是旧语法）
-        target_compile_options(${bench_name} PRIVATE -O3)
-    endif()
-endforeach()
+    # 使用 EXCLUDE_FROM_ALL 确保 'just build' 不会默认编译它
+    add_library(catch2_bench STATIC EXCLUDE_FROM_ALL ${BENCH_MAIN_SRC})
+    target_compile_definitions(catch2_bench PUBLIC CATCH_CONFIG_ENABLE_BENCHMARKING)
+
+    file(GLOB BENCH_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bench_*.cpp")
+
+    foreach(bench_src ${BENCH_SOURCES})
+        get_filename_component(bench_name ${bench_src} NAME_WE)
+
+        if(NOT ${bench_name} STREQUAL "bench_main")
+            # 同样增加 EXCLUDE_FROM_ALL
+            add_executable(${bench_name} EXCLUDE_FROM_ALL ${bench_src})
+            target_link_libraries(${bench_name} PRIVATE catch2_bench impl_algo)
+
+            set_target_properties(${bench_name} PROPERTIES 
+                RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/benchmarks"
+            )
+
+            # 保持你之前的 Clang 优化降级逻辑，防止索引时 clangd 压力过大
+            if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                target_compile_options(${bench_name} PRIVATE -O2)
+            else()
+                target_compile_options(${bench_name} PRIVATE -O3)
+            endif()
+        endif()
+    endforeach()
+endif()
