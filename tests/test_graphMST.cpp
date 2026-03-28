@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <catch2/catch.hpp>
 #include <cstdio>
 #include <vector>
@@ -7,23 +8,33 @@
 
 /**
  * @brief 构造测试图的辅助模板
+ * * 逻辑修正：针对无向图（MST的主要场景），必须成对添加边 (u,v) 和 (v,u)，
+ * 这样 ALGraph.c 中的 all_edges (n_edges / 2) 逻辑和邻接表遍历才能正确工作。
  */
 template <typename T>
-T* BuildTestGraph(int nv, const std::vector<Edge>& edges,
-                  T* (*init)(int),        // 明确 init 返回 T*
-                  void (*destroy)(T*)) {  // 明确 destroy 接收 T*
-  T* g = init(nv);
+T* BuildTestGraph(int nv, const std::vector<Edge>& edges, bool is_directed,
+                  T* (*init)(int, bool), void (*destroy)(T*)) {
+  // 1. 调用更新后的 init
+  T* g = init(nv, is_directed);
   if (!g) return nullptr;
 
-  // 因为你已经把 bg 放在了第一位，这里强转是安全的
   BaseGraph* bg = (BaseGraph*)g;
 
+  // 2. 添加顶点
   for (int i = 0; i < nv; ++i) {
     if (bg->mops.add_vert) bg->mops.add_vert(g);
   }
 
+  // 3. 添加边
   for (const auto& e : edges) {
-    if (bg->mops.add_edge) bg->mops.add_edge(g, e.t, e.h, e.w);
+    if (bg->mops.add_edge) {
+      // 添加主向边
+      bg->mops.add_edge(g, e.t, e.h, e.w);
+      // 如果是无向图，添加反向边以维持对称性
+      if (!is_directed) {
+        bg->mops.add_edge(g, e.h, e.t, e.w);
+      }
+    }
   }
   return g;
 }
@@ -32,6 +43,7 @@ T* BuildTestGraph(int nv, const std::vector<Edge>& edges,
  * @brief 计算生成森林的总权重
  */
 double GetTotalWeight(const MSTResult* res) {
+  if (!res) return 0.0;
   double sum = 0;
   for (int i = 0; i < res->edge_count; ++i) {
     sum += res->edges[i].w;
@@ -40,32 +52,34 @@ double GetTotalWeight(const MSTResult* res) {
 }
 
 TEST_CASE("MST Algorithms: Adjacency List (ALGraph)", "[ALGraph][MST]") {
+  // 对于 MST，通常使用无向图 (directed = false)
+  const bool is_directed = false;
+
   SECTION("Connected Graph: Classic Triangle") {
     // 0-1 (1.0), 1-2 (2.0), 0-2 (0.5)
     // 预期 MST: 0-1 (1.0) 和 0-2 (0.5), 总权重 1.5
     std::vector<Edge> edges = {{0, 1, 1.0}, {1, 2, 2.0}, {0, 2, 0.5}};
-    ALGraph* g = BuildTestGraph(3, edges, algraph_init, algraph_destroy);
-    printf("Graph built\n");
+    ALGraph* g =
+        BuildTestGraph(3, edges, is_directed, algraph_init, algraph_destroy);
 
-    printf("Running Kruskal\n");
+    REQUIRE(g != nullptr);
+
     MSTResult* res_k = Kruskal(g, &g->bg);
-    printf("Running Prim\n");
     MSTResult* res_p = Prim(g, &g->bg);
 
     REQUIRE(res_k != nullptr);
     REQUIRE(res_p != nullptr);
 
-    // 1. 验证连通分量数量
+    // 验证连通性
     CHECK(res_k->component_count == 1);
     CHECK(res_p->component_count == 1);
 
-    // 2. 验证最小总权重
+    // 验证权重
     CHECK(GetTotalWeight(res_k) == Approx(1.5));
     CHECK(GetTotalWeight(res_p) == Approx(1.5));
 
-    // 3. 验证哨兵位逻辑 (n_comp + 1)
-    CHECK(res_k->component_offset[0] == 0);
-    CHECK(res_k->component_offset[1] == 2);  // 2 条边
+    // 验证边数：3个顶点连通图 MST 应有 2 条边
+    CHECK(res_k->edge_count == 2);
 
     DestroyMSTResult(&res_k);
     DestroyMSTResult(&res_p);
@@ -77,21 +91,27 @@ TEST_CASE("MST Algorithms: Adjacency List (ALGraph)", "[ALGraph][MST]") {
     // C2: 2-3 (5.0), 3-4 (2.0)
     // 预期: 2个分量, 3条边, 总重 17.0
     std::vector<Edge> edges = {{0, 1, 10.0}, {2, 3, 5.0}, {3, 4, 2.0}};
-    ALGraph* g = BuildTestGraph(5, edges, algraph_init, algraph_destroy);
-    printf("Running Kruskal\n");
+    ALGraph* g =
+        BuildTestGraph(5, edges, is_directed, algraph_init, algraph_destroy);
+
     MSTResult* res_k = Kruskal(g, &g->bg);
-    printf("Running Prim\n");
     MSTResult* res_p = Prim(g, &g->bg);
+
+    REQUIRE(res_k != nullptr);
+    REQUIRE(res_p != nullptr);
 
     CHECK(res_k->component_count == 2);
     CHECK(res_p->component_count == 2);
     CHECK(res_k->edge_count == 3);
     CHECK(GetTotalWeight(res_k) == Approx(17.0));
 
-    // 验证第二个分量的边是否被正确重排 (通过 offset)
-    int c2_start = res_k->component_offset[1];
-    int c2_end = res_k->component_offset[2];
-    CHECK((c2_end - c2_start) == 2);  // 第二个分量有2条边
+    // 验证分量偏移量
+    // 第一个分量 (0,1) -> 1条边；第二个分量 (2,3,4) -> 2条边
+    // Kruskal 可能会根据边权排序，所以偏移量顺序可能不同，但总数应一致
+    int c1_edges = res_k->component_offset[1] - res_k->component_offset[0];
+    int c2_edges = res_k->component_offset[2] - res_k->component_offset[1];
+    CHECK(
+        ((c1_edges == 1 && c2_edges == 2) || (c1_edges == 2 && c2_edges == 1)));
 
     DestroyMSTResult(&res_k);
     DestroyMSTResult(&res_p);
@@ -102,17 +122,17 @@ TEST_CASE("MST Algorithms: Adjacency List (ALGraph)", "[ALGraph][MST]") {
 TEST_CASE("MST Cross-Model Consistency", "[mst]") {
   std::vector<Edge> edges = {{0, 1, 1.0}, {1, 2, 2.0}, {0, 2, 0.5}};
 
-  SECTION("ALGraph Model") {
-    // 使用方案 A 的调用方式
-    auto* g = BuildTestGraph<ALGraph>(3, edges, algraph_init, algraph_destroy);
-    printf("Graph built\n");
+  SECTION("ALGraph Model Consistency") {
+    auto* g =
+        BuildTestGraph<ALGraph>(3, edges, false, algraph_init, algraph_destroy);
     REQUIRE(g != nullptr);
-    printf("Running Kruskal\n");
+
     MSTResult* res = Kruskal(g, &g->bg);
+    REQUIRE(res != nullptr);
     CHECK(res->edge_count == 2);
+    CHECK(GetTotalWeight(res) == Approx(1.5));
 
     algraph_destroy(g);
     DestroyMSTResult(&res);
-    // 注意：别忘了释放 res 里的 edges 和 offset
   }
 }

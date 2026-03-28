@@ -13,7 +13,7 @@ extern "C" {
 // 测试 1: ALGraph (邻接表) - 动态添加顶点与有向边
 // ---------------------------------------------------------
 TEST_CASE("ALGraph Container Semantics", "[algraph]") {
-  ALGraph* raw_g = algraph_init(4);
+  ALGraph* raw_g = algraph_init(4, false);
   REQUIRE(raw_g != nullptr);
 
   // 模拟多态调用：仅通过 void* 和 BaseGraph* 接口操作

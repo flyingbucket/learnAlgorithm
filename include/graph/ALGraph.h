@@ -30,7 +30,7 @@ typedef struct {
   bool directed;
 } ALGraph;
 
-ALGraph* algraph_init(int capacity);
+ALGraph* algraph_init(int capacity, bool directed);
 void algraph_destroy(ALGraph* G);
 
 #ifdef __cplusplus

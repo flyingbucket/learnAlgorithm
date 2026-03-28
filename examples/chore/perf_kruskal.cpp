@@ -73,8 +73,7 @@ double profile_kruskal(int nv, int ne, bool use_matrix) {
     g = mg;
     bg = &mg->bg;
   } else {
-    ALGraph* alg = algraph_init(nv);
-    alg->directed = false;
+    ALGraph* alg = algraph_init(nv, false);
     SetupGraph(alg, nv, ne, &alg->bg);
     g = alg;
     bg = &alg->bg;

@@ -94,8 +94,7 @@ TEST_CASE("MST Algorithm Performance", "[benchmark]") {
 
     // --- ALGraph 性能测试 ---
     SECTION("ALGraph " + c.name) {
-      ALGraph* g = algraph_init(c.nv);
-      g->directed = true;
+      ALGraph* g = algraph_init(c.nv, true);
       if (c.is_dense) {
         SetupDenseRandomGraph(g, c.nv, c.ne, &g->bg);
       } else {

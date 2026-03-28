@@ -78,8 +78,7 @@ int main() {
   int nv = 2000, ne = 1000;
   printf("Before algraph_init\n");
   sleep(1);
-  ALGraph* g = algraph_init(nv);
-  g->directed = true;
+  ALGraph* g = algraph_init(nv, true);
 
   printf("Initializing Graph: V=%d, E=%d...\n", nv, ne);
   sleep(1);

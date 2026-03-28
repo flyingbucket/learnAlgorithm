@@ -283,7 +283,7 @@ static const WeightedGraphOps ALGRAPH_WOPS = {
     .update_edge_weight = update_edge_weight,
     .get_edge_weight = get_edge_weight};
 
-ALGraph* algraph_init(int capccity) {
+ALGraph* algraph_init(int capccity, bool directed) {
   ALGraph* g = (ALGraph*)malloc(sizeof(ALGraph));
   if (!g) return NULL;
 
@@ -295,6 +295,7 @@ ALGraph* algraph_init(int capccity) {
   g->bg = initial_bg;
   g->n_verts = 0;
   g->n_edges = 0;
+  g->directed = directed;
 
   g->vert_capacity = (capccity > 0) ? capccity : 4;
   g->verts = (ALVNode*)malloc(g->vert_capacity * sizeof(ALVNode));
