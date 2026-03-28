@@ -52,6 +52,8 @@ MSTResult* Prim(const void* graph_ori, const BaseGraph* graph_ori_methods);
 MSTResult* Kruskal(const void* graph_ori, const BaseGraph* graph_ori_methods);
 void Dijkstra(void);
 
+// shortest path
+
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
