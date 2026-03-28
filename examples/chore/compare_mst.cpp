@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <random>
 
 #include "graph/ALGraph.h"
@@ -18,17 +20,19 @@ void SetupRandomGraph(GType* g, int nv, int ne, BaseGraph* bg) {
 
 int main() {
   int nv = 2000, ne = 1000;
-
-  // 1. 初始化
+  printf("Before algraph_init\n");
+  sleep(1);
   ALGraph* g = algraph_init(nv);
-
-  // 2. 关键！必须明确图的类型，否则 all_edges 会分配错误的大小
   g->directed = true;
 
   printf("Initializing Graph: V=%d, E=%d...\n", nv, ne);
+  sleep(1);
   SetupRandomGraph(g, nv, ne, &g->bg);
+  SetupRandomGraph(g, nv, ne, &g->bg);
+  printf("Initializing Graph: V=%d, E=%d...\n", g->n_verts, g->n_edges);
 
   printf("Running Kruskal...\n");
+  sleep(1);
   MSTResult* res = Kruskal(g, &g->bg);
 
   if (res) {
