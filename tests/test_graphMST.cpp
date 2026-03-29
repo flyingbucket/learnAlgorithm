@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <catch2/catch.hpp>
-#include <cstdio>
 #include <vector>
 
 #include "graph/ALGraph.h"
