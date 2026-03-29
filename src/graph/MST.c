@@ -129,7 +129,7 @@ MSTResult* Kruskal(const void* graph_context, const BaseGraph* bg) {
   int nv = bg->iops.vertex_count(G);
   int ne = (bg->iops.directed(G)) ? bg->iops.edge_count(G)
                                   : bg->iops.edge_count(G) / 2;
-  all_edges = bg->qops.all_edges(G);
+  all_edges = bg->qops.all_edges(G, true);
   if (!all_edges) goto cleanup;
   qsort(all_edges, ne, sizeof(Edge), compare_edge);
   for (int i = 0; i < ne; i++) {

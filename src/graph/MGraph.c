@@ -77,44 +77,58 @@ static Edge m_next_neighbor(const void* G, VertexId v, VertexId w) {
   }
   return invalid_edge;
 }
-
-static Edge* m_all_edges(const void* G) {
+static Edge* m_all_edges(const void* G, bool filter) {
   if (!G) return NULL;
   MGraph* g = (MGraph*)G;
 
-  Edge* edges = (Edge*)malloc(sizeof(Edge) * g->n_edges);
+  // 确定返回的边数量
+  // 如果是无向图且开启过滤，则边数减半（因为矩阵中存了两份）
+  int n_edges = (g->directed || !filter) ? g->n_edges : g->n_edges / 2;
+
+  Edge* edges = (Edge*)malloc(sizeof(Edge) * n_edges);
   if (!edges) return NULL;
 
-  int count = 0;
+  int e_count = 0;
   for (int i = 0; i < g->n_verts; i++) {
-    int start_j = (g->directed) ? 0 : i + 1;
+    // 如果是无向图且需要过滤，j 从 i + 1 开始，只看上三角
+    int start_j = (!g->directed && filter) ? (i + 1) : 0;
 
     for (int j = start_j; j < g->n_verts; j++) {
-      // 3. 索引计算：i * 宽度 + j
-      // 注意：这里假设你的矩阵宽度就是 g->n_verts
       Weight w = g->adj[i * g->n_verts + j];
 
-      // 4. 判断边是否存在 (假设 0 代表无边，且不是自环)
-      // 你可以根据你的定义修改判断条件，如 w != INF
-      if (w > 0 && w < 1000000) {  // 这里的 1000000 对应你的 INF 定义
-        if (count < g->n_edges) {
-          edges[count].t = i;  // 起点 (tail)
-          edges[count].h = j;  // 终点 (head)
-          edges[count].w = w;  // 权重
-          count++;
+      // 假设权重不为0表示存在边（请根据你的业务逻辑修改判断条件，如 w < INF）
+      if (w != 0) {
+        // 进一步检查：如果是无向图但未开启 filter，i < j
+        // 的逻辑已由循环范围或下述判断覆盖 这里保持与你 ALGraph
+        // 类似的健壮性判断
+        if (g->directed || !filter || i < j) {
+          if (e_count < n_edges) {
+            edges[e_count].t = (VertexId)i;
+            edges[e_count].h = (VertexId)j;
+            edges[e_count].w = w;
+            e_count++;
+          }
         }
       }
     }
   }
-
-  // 5. 安全检查：如果实际发现的边数少于 n_edges，可以更新或记录
   return edges;
+}
+static Weight* m_get_materix(const void* G) {
+  if (G == NULL) return NULL;
+  MGraph* g = (MGraph*)G;
+  size_t size = sizeof(Weight) * g->n_verts * g->n_verts;
+  Weight* mat = (Weight*)malloc(size);
+  if (mat == NULL) return NULL;
+  memcpy(mat, g->adj, size);
+  return mat;
 }
 static const GraphQueryOps MGRAPH_QOPS = {
     .adjacent = m_adjacent,
     .first_neighbor = m_first_neighbor,
     .next_neighbor = m_next_neighbor,
     .all_edges = m_all_edges,
+    .get_materix = m_get_materix,
 };
 
 static VertexId m_add_vert(void* G) {

@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "graph/GraphOps.h"
@@ -89,16 +88,16 @@ static Edge next_neighbor(const void* G, VertexId v, VertexId w) {
   };
   return res;
 }
-static Edge* all_edges(const void* G) {
+static Edge* all_edges(const void* G, bool filter) {
   if (!G) return NULL;
   ALGraph* g = (ALGraph*)G;
   int e_count = 0;
-  int n_edges = (g->directed) ? g->n_edges : g->n_edges / 2;
+  int n_edges = (g->directed || !filter) ? g->n_edges : g->n_edges / 2;
   Edge* edges = (Edge*)malloc(sizeof(Edge) * n_edges);
   for (VertexId i = 0; i < g->n_verts; i++) {
     ALENode* e = g->verts[i].firstarc;
     while (e != NULL) {
-      if (g->directed || i < e->adjvex) {
+      if (g->directed || !filter || i < e->adjvex) {
         if (e_count < n_edges) {
           edges[e_count].t = i;
           edges[e_count].h = e->adjvex, edges[e_count].w = e->w;
@@ -110,11 +109,32 @@ static Edge* all_edges(const void* G) {
   }
   return edges;
 }
+static Weight* get_matrix(const void* G) {
+  if (G == NULL) return NULL;
+  ALGraph* g = (ALGraph*)G;
+  Weight* mat = NULL;
+  int n = g->n_verts;
+  Edge* edges = all_edges(G, false);
+  if (edges->h == -1) goto cleanup;
+  size_t size = sizeof(Weight) * g->n_verts * g->n_verts;
+  mat = (Weight*)malloc(size);
+  if (mat == NULL) goto cleanup;
+  for (int i = 0; i < g->n_edges; i++) {
+    VertexId h = edges[i].h;
+    VertexId t = edges[i].t;
+    mat[h * n + t] = edges[i].w;
+  }
+cleanup:
+  if (edges) free(edges);
+  return mat;
+}
+
 GraphQueryOps const ALGRAPH_QOPS = {
     .adjacent = adjacent,
     .first_neighbor = first_neighbor,
     .next_neighbor = next_neighbor,
     .all_edges = all_edges,
+    .get_materix = get_matrix,
 };
 
 static VertexId add_vert(void* G) {

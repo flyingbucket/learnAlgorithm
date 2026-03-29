@@ -26,7 +26,8 @@ typedef struct GraphQueryOps {
   bool (*adjacent)(const void* G, VertexId v1, VertexId v2);
   Edge (*first_neighbor)(const void* G, VertexId v);
   Edge (*next_neighbor)(const void* G, VertexId v, VertexId w);
-  Edge* (*all_edges)(const void* G);
+  Edge* (*all_edges)(const void* G, bool filter);
+  Weight* (*get_materix)(const void* G);
 } GraphQueryOps;
 
 typedef struct GraphMutateOps {
