@@ -1,7 +1,15 @@
 CompileFlags:
   CompilationDatabase: build/
   Add: [-Wall, -Wextra, -Wshadow]
+---
+If:
+  PathMatch: .*\.c
+CompileFlags:
+  Add: [-xc, -std=c11]
+Index:
+  StandardLibrary: true
 
+---
 Diagnostics:
   ClangTidy:
     Add:
