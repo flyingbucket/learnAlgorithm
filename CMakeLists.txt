@@ -54,7 +54,23 @@ if(CCACHE_PROGRAM)
     message(STATUS "ccache enabled.")
 endif()
 
+#include 路径声明
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/third_party)
+
 # 添加子模块
+# include third_party INTERFACE
+add_library(headers_impl_algo INTERFACE)
+target_include_directories(headers_impl_algo INTERFACE ${PROJECT_SOURCE_DIR}/include)
+file(GLOB_RECURSE ALL_HEADERS 
+    "${PROJECT_SOURCE_DIR}/include/*.hpp" 
+    "${PROJECT_SOURCE_DIR}/include/*.h"
+)
+target_sources(headers_impl_algo INTERFACE ${ALL_HEADERS})
+
+add_library(catch2_test_framework INTERFACE)
+target_include_directories(catch2_test_framework INTERFACE ${PROJECT_SOURCE_DIR}/third_party)
+
 # 核心库
 add_subdirectory(src)
 

@@ -10,7 +10,7 @@ if(BUILD_TESTS)
 
     set(TEST_MAIN_SRC "test_main.cpp")
     add_library(catch2_main SHARED ${TEST_MAIN_SRC})
-    target_include_directories(catch2_main PRIVATE "${PROJECT_SOURCE_DIR}/third_party")
+    target_link_libraries(catch2_main PUBLIC catch2_test_framework)
     target_compile_definitions(catch2_main PRIVATE CATCH_CONFIG_MAIN)
     target_precompile_headers(catch2_main PRIVATE "${PROJECT_SOURCE_DIR}/third_party/catch2/catch.hpp")
 

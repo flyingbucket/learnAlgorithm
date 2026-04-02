@@ -1,7 +1,7 @@
 set(BENCH_MAIN_SRC "bench_main.cpp")
 add_library(catch2_bench OBJECT ${BENCH_MAIN_SRC})
 
-target_include_directories(catch2_bench PUBLIC "${PROJECT_SOURCE_DIR}/third_party")
+target_link_libraries(catch2_bench PUBLIC catch2_test_framework)
 target_compile_definitions(catch2_bench PUBLIC CATCH_CONFIG_ENABLE_BENCHMARKING)
 
 if(NOT MSVC)
